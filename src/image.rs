@@ -1,4 +1,5 @@
 use std::ops::{Index, IndexMut};
+use std::io::Write;
 
 use crate::Vec3;
 
@@ -21,22 +22,10 @@ impl ColorRGB {
         self.z()
     }
 
-    pub fn set_r(&mut self, val: f32) {
-        self.set_x(val)
-    }
-
-    pub fn set_g(&mut self, val: f32) {
-        self.set_y(val)
-    }
-
-    pub fn set_b(&mut self, val: f32) {
-        self.set_z(val)
-    }
-
     pub fn to_u8(&self) -> (u8, u8, u8) {
-        assert!(self.r() >= 0f32 && self.r() <= 1f32);
-        assert!(self.g() >= 0f32 && self.g() <= 1f32);
-        assert!(self.b() >= 0f32 && self.b() <= 1f32);
+        debug_assert!(self.r() >= 0f32 && self.r() <= 1f32);
+        debug_assert!(self.g() >= 0f32 && self.g() <= 1f32);
+        debug_assert!(self.b() >= 0f32 && self.b() <= 1f32);
 
         ((self.r() * 255.99f32) as u8,
          (self.g() * 255.99f32) as u8,
@@ -68,22 +57,23 @@ impl Image {
         self.height
     }
 
-    pub fn print_as_ppm(&self) {
-        println!("P3");
-        println!("{} {}", self.width, self.height);
-        println!("255");
+    pub fn write_ppm<T>(&self, file: &mut T) -> Result<(), std::io::Error>
+        where T: Write {
+        writeln!(file, "P3")?;
+        writeln!(file, "{} {}", self.width, self.height)?;
+        writeln!(file, "255")?;
         for pixel in &self.img {
             let (r, g, b) = pixel.to_u8();
-            println!("{} {} {}", r, g, b);
+            writeln!(file, "{} {} {}", r, g, b)?;
         }
+        Ok(())
     }
 }
 
 impl Index<(u32, u32)> for Image {
     type Output = ColorRGB;
 
-    fn index(&self, index: (u32, u32)) -> &Self::Output {
-        let (x, y) = index;
+    fn index(&self, (x, y): (u32, u32)) -> &Self::Output {
         &self.img[(y * self.width + x) as usize]
     }
 }

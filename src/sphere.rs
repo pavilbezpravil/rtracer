@@ -2,40 +2,57 @@ use crate::Vec3;
 use crate::Ray;
 
 pub struct Sphere {
-    center: Vec3,
-    radius: f32,
+    pub center: Vec3,
+    pub radius: f32,
 }
 
 impl Sphere {
-    pub fn new(center: &Vec3, radius: f32) -> Sphere {
-        Sphere { center: *center, radius }
+    pub fn new(center: Vec3, radius: f32) -> Sphere {
+        Sphere { center, radius }
     }
 
-    pub fn center(&self) -> &Vec3 {
-        &self.center
-    }
+    pub fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
+        let sphere = self;
+        let oc = ray.origin - sphere.center;
 
-    pub fn radius(&self) -> f32 {
-        self.radius
-    }
+        let a = ray.direction.squared_length();
+        let b = ray.direction.dot(&oc);
+        let c = oc.dot(&oc) - sphere.radius * sphere.radius;
 
-    pub fn set_center(&mut self, center: &Vec3) {
-        self.center = *center
-    }
+        let discriminant = b * b -  a * c;
 
-    pub fn set_radius(&mut self, radius: f32) {
-        self.radius = radius
+        if discriminant > 0f32 {
+            let discriminant_root = discriminant.sqrt();
+
+            let t = (-b - discriminant_root) / a;
+            if t < t_max && t > t_min {
+                let point = ray.point_at_parameter(t);
+                let normal = (point - sphere.center) / sphere.radius;
+                return Some(HitRecord::new(t, &point, &normal))
+            }
+
+            let t = (-b + discriminant_root) / a;
+            if t < t_max && t > t_min {
+                let point = ray.point_at_parameter(t);
+                let normal = (point - sphere.center) / sphere.radius;
+                return Some(HitRecord::new(t, &point, &normal))
+            }
+
+            None
+        } else {
+            None
+        }
     }
 }
 
-pub fn hit_sphere(sphere: &Sphere, ray: &Ray) -> bool {
-    let to_sphere = sphere.center - *ray.origin();
-    let ray_direction = *ray.direction().clone().make_unit();
+pub struct HitRecord {
+    pub t: f32,
+    pub point: Vec3,
+    pub normal: Vec3,
+}
 
-    let squared_dist = {
-        let a = to_sphere.dot(&ray_direction);
-        to_sphere.dot(&to_sphere) - a * a
-    };
-
-    squared_dist <= sphere.radius * sphere.radius
+impl HitRecord {
+    pub fn new(t: f32, point: &Vec3, normal: &Vec3) -> HitRecord {
+        HitRecord { t, point: *point, normal: *normal }
+    }
 }

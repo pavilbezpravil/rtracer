@@ -4,28 +4,40 @@ use std::ops::{Sub, SubAssign};
 use std::ops::{Mul, MulAssign};
 use std::ops::{Div, DivAssign};
 
-#[derive(Debug, Copy, Clone)]
-pub struct Vec3 {
-    x: f32,
-    y: f32,
-    z: f32,
-}
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct Vec3([f32; 3]);
 
 impl Vec3 {
+    pub const I: Vec3 = Vec3([1.0, 0.0, 0.0]);
+    pub const J: Vec3 = Vec3([0.0, 1.0, 0.0]);
+    pub const K: Vec3 = Vec3([0.0, 0.0, 1.0]);
+
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
-        Vec3 { x, y, z }
+        Vec3([x, y, z])
     }
 
     pub fn new_x() -> Vec3 {
-        Vec3::new(1f32, 0f32, 0f32)
+        Vec3::I
     }
 
     pub fn new_y() -> Vec3 {
-        Vec3::new(0f32, 1f32, 0f32)
+        Vec3::J
     }
 
     pub fn new_z() -> Vec3 {
-        Vec3::new(0f32, 0f32, 1f32)
+        Vec3::K
+    }
+
+    pub fn new_nx() -> Vec3 {
+        -Vec3::new_x()
+    }
+
+    pub fn new_ny() -> Vec3 {
+        -Vec3::new_y()
+    }
+
+    pub fn new_nz() -> Vec3 {
+        -Vec3::new_z()
     }
 
     pub fn origin() -> Vec3 {
@@ -33,27 +45,15 @@ impl Vec3 {
     }
 
     pub fn x(&self) -> f32 {
-        self.x
+        self.0[0]
     }
 
     pub fn y(&self) -> f32 {
-        self.y
+        self.0[1]
     }
 
     pub fn z(&self) -> f32 {
-        self.z
-    }
-
-    pub fn set_x(&mut self, val: f32) {
-        self.x = val
-    }
-
-    pub fn set_y(&mut self, val: f32) {
-        self.y = val
-    }
-
-    pub fn set_z(&mut self, val: f32) {
-        self.z = val
+        self.0[2]
     }
 
     pub fn length(&self) -> f32 {
@@ -61,18 +61,18 @@ impl Vec3 {
     }
 
     pub fn squared_length(&self) -> f32 {
-        self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
+        self.x().powi(2) + self.y().powi(2) + self.z().powi(2)
     }
 
     pub fn dot(&self, rhs: &Vec3) -> f32 {
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+        self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
     }
 
     pub fn cross(&self, rhs: &Vec3) -> Vec3 {
         Vec3::new(
-            self.y * rhs.z - self.z *rhs.y,
-            self.z * rhs.x - self.x *rhs.z,
-            self.x * rhs.y - self.y *rhs.x,
+            self.y() * rhs.z() - self.z() *rhs.y(),
+            self.z() * rhs.x() - self.x() *rhs.z(),
+            self.x() * rhs.y() - self.y() *rhs.x(),
         )
     }
 
@@ -87,7 +87,7 @@ impl Neg for Vec3 {
     type Output = Vec3;
 
     fn neg(self) -> Self::Output {
-        Vec3::new(-self.x, -self.y, -self.z)
+        Vec3::new(-self.x(), -self.y(), -self.z())
     }
 }
 
@@ -103,9 +103,9 @@ impl Add for Vec3 {
 
 impl AddAssign for Vec3 {
     fn add_assign(&mut self, rhs: Vec3) {
-        self.x += rhs.x;
-        self.y += rhs.y;
-        self.z += rhs.z;
+        self.0[0] += rhs.x();
+        self.0[1] += rhs.y();
+        self.0[2] += rhs.z();
     }
 }
 
@@ -121,9 +121,9 @@ impl Sub for Vec3 {
 
 impl SubAssign for Vec3 {
     fn sub_assign(&mut self, rhs: Vec3) {
-        self.x -= rhs.x;
-        self.y -= rhs.y;
-        self.z -= rhs.z;
+        self.0[0] -= rhs.x();
+        self.0[1] -= rhs.y();
+        self.0[2] -= rhs.z();
     }
 }
 
@@ -139,9 +139,9 @@ impl Mul for Vec3 {
 
 impl MulAssign for Vec3 {
     fn mul_assign(&mut self, rhs: Vec3) {
-        self.x *= rhs.x;
-        self.y *= rhs.y;
-        self.z *= rhs.z;
+        self.0[0] *= rhs.x();
+        self.0[1] *= rhs.y();
+        self.0[2] *= rhs.z();
     }
 }
 
@@ -167,9 +167,9 @@ impl Mul<Vec3> for f32 {
 
 impl MulAssign<f32> for Vec3 {
     fn mul_assign(&mut self, scale: f32) {
-        self.x *= scale;
-        self.y *= scale;
-        self.z *= scale;
+        self.0[0] *= scale;
+        self.0[1] *= scale;
+        self.0[2] *= scale;
     }
 }
 
@@ -185,19 +185,9 @@ impl Div<f32> for Vec3 {
 
 impl DivAssign<f32> for Vec3 {
     fn div_assign(&mut self, scale: f32) {
-        self.x /= scale;
-        self.y /= scale;
-        self.z /= scale;
-    }
-}
-
-impl PartialEq for Vec3 {
-    fn eq(&self, other: &Vec3) -> bool {
-        self.x == other.x && self.y == other.y && self.z == other.z
-    }
-
-    fn ne(&self, other: &Vec3) -> bool {
-        !self.eq(other)
+        self.0[0] /= scale;
+        self.0[1] /= scale;
+        self.0[2] /= scale;
     }
 }
 
@@ -212,19 +202,6 @@ mod tests {
         assert_eq!(v1.x(), 1f32);
         assert_eq!(v1.y(), 2f32);
         assert_eq!(v1.z(), 3f32);
-    }
-
-    #[test]
-    fn test_set() {
-        let mut v1 = Vec3::new(1f32, 2f32, 3f32);
-
-        v1.set_x(11f32);
-        v1.set_y(12f32);
-        v1.set_z(13f32);
-
-        assert_eq!(v1.x(), 11f32);
-        assert_eq!(v1.y(), 12f32);
-        assert_eq!(v1.z(), 13f32);
     }
 
     #[test]
@@ -297,6 +274,9 @@ mod tests {
         let i = Vec3::new(1.0, 0.0, 0.0);
         let j = Vec3::new(0.0, 1.0, 0.0);
         let k = Vec3::new(0.0, 0.0, 1.0);
+        assert_eq!(Vec3::I, i);
+        assert_eq!(Vec3::J, j);
+        assert_eq!(Vec3::K, k);
         assert_eq!(i.cross(&j), k);
         assert_eq!(j.cross(&k), i);
         assert_eq!(k.cross(&i), j);
@@ -315,6 +295,7 @@ mod tests {
         let res = (10 + 40 + 90) as f32;
 
         assert_eq!(v1.dot(&v2), res);
+        assert_eq!(v2.dot(&v1), res);
     }
 
     #[test]
