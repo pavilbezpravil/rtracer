@@ -31,6 +31,12 @@ impl ColorRGB {
          (self.g() * 255.99f32) as u8,
          (self.b() * 255.99f32) as u8)
     }
+
+    pub fn gamma_correction(&self, gamma: f32) -> Vec3 {
+        Vec3::new(self.x().powf(1. / gamma),
+                  self.y().powf(1. / gamma),
+                  self.z().powf(1. / gamma))
+    }
 }
 
 pub struct Image {
@@ -74,13 +80,16 @@ impl Index<(u32, u32)> for Image {
     type Output = ColorRGB;
 
     fn index(&self, (x, y): (u32, u32)) -> &Self::Output {
+        debug_assert!(y < self.height);
+        debug_assert!(x < self.width);
         &self.img[(y * self.width + x) as usize]
     }
 }
 
 impl IndexMut<(u32, u32)> for Image {
-    fn index_mut(&mut self, index: (u32, u32)) -> &mut Self::Output {
-        let (x, y) = index;
+    fn index_mut(&mut self, (x, y): (u32, u32)) -> &mut Self::Output {
+        debug_assert!(y < self.height);
+        debug_assert!(x < self.width);
         &mut self.img[(y * self.width + x) as usize]
     }
 }

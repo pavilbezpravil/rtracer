@@ -78,6 +78,7 @@ impl Vec3 {
 
     pub fn make_unit(&mut self) -> &mut Vec3 {
         // TODO: self.length() == 0
+        debug_assert!(self.length() > 2. * std::f32::EPSILON);
         *self /= self.length();
         self
     }
@@ -188,6 +189,12 @@ impl DivAssign<f32> for Vec3 {
         self.0[0] /= scale;
         self.0[1] /= scale;
         self.0[2] /= scale;
+    }
+}
+
+impl From<[f32; 3]> for Vec3 {
+    fn from(ns: [f32; 3]) -> Vec3 {
+        Vec3 { 0: ns }
     }
 }
 
