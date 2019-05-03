@@ -1,15 +1,16 @@
-use crate::Vec3;
+use crate::{Vec3, Scatter};
 use crate::Ray;
 
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub t: f32,
     pub point: Vec3,
     pub normal: Vec3,
+    pub scatter: &'a (dyn Scatter + Sync),
 }
 
-impl HitRecord {
-    pub fn new(t: f32, point: &Vec3, normal: &Vec3) -> HitRecord {
-        HitRecord { t, point: *point, normal: *normal }
+impl<'a> HitRecord<'a> {
+    pub fn new(t: f32, point: Vec3, normal: Vec3, scatter: &(Scatter + Sync)) -> HitRecord {
+        HitRecord { t, point, normal, scatter }
     }
 }
 

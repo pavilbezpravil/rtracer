@@ -48,11 +48,11 @@ pub struct Image {
 
 impl Image {
     pub fn new(width: u32, height: u32) -> Image {
-        Image::with_background(width, height, &ColorRGB::new(0f32, 0f32, 0f32))
+        Image::with_background(width, height, ColorRGB::new(0f32, 0f32, 0f32))
     }
 
-    pub fn with_background(width: u32, height: u32, c: &ColorRGB) -> Image {
-        Image { width, height, img: vec![*c; (width * height) as usize] }
+    pub fn with_background(width: u32, height: u32, c: ColorRGB) -> Image {
+        Image { width, height, img: vec![c; (width * height) as usize] }
     }
 
     pub fn width(&self) -> u32 {
@@ -61,6 +61,10 @@ impl Image {
 
     pub fn height(&self) -> u32 {
         self.height
+    }
+
+    pub fn buf_mut(&mut self) -> &mut Vec<ColorRGB> {
+        &mut self.img
     }
 
     pub fn write_ppm<T>(&self, file: &mut T) -> Result<(), std::io::Error>

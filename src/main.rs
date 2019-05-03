@@ -1,29 +1,35 @@
 extern crate rtracer;
 extern crate rand;
+extern crate rayon;
+extern crate itertools;
 
-use rand::distributions::{UnitSphereSurface, Distribution};
+use std::sync::Arc;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera};
+use rayon::prelude::*;
+
+use itertools::iproduct;
+
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
 use rtracer::Sphere;
 
-fn random_in_unit_sphere() -> Vec3 {
-    let sphere = UnitSphereSurface::new();
-    let ns = sphere.sample(&mut rand::thread_rng());;
-    [ns[0] as f32, ns[1] as f32, ns[2] as f32].into()
-}
+const MAX_RAY_DEPTH: u32 = 50;
 
-fn color(ray: &Ray, scene: &HitList) -> ColorRGB {
+fn color(ray: &Ray, scene: &HitList, depth: u32) -> ColorRGB {
     if let Some(rec) = scene.hit(ray, (0.00001f32, std::f32::MAX)) {
-        let target = rec.normal + random_in_unit_sphere();
-        return 0.5f32 * color(&Ray::new(rec.point, target), scene);
+        if let Some(scattered) = rec.scatter.scatter(ray, &rec) {
+            if depth < MAX_RAY_DEPTH {
+                return scattered.attenuation * color(&scattered.ray, scene, depth + 1);
+            }
+        }
+        Vec3::origin()
+    } else {
+        let unit_direction = ray.direction.make_unit();
+        let t = 0.5f32 * (unit_direction.y() + 1f32);
+        (1f32 - t) * Vec3::new(1f32, 1f32, 1f32) + t * Vec3::new(0.5f32, 0.7f32, 1f32)
     }
-
-    let unit_direction = *ray.direction.clone().make_unit();
-    let t = 0.5f32 * (unit_direction.y() + 1f32);
-    (1f32 - t) * Vec3::new(1f32, 1f32, 1f32) + t * Vec3::new(0.5f32, 0.7f32, 1f32)
 }
 
 fn draw_scene(img: &mut Image, scene: &HitList) {
@@ -36,25 +42,26 @@ fn draw_scene(img: &mut Image, scene: &HitList) {
     let camera_pos = Vec3::origin();
     let camera = Camera::new(camera_pos, ul, horizontal, vertical);
 
-    let ns = 1000u32;
+    let ns = 100u32;
 
-    for j in (0..height).rev() {
-        for i in 0..width {
+    iproduct!((0..height), (0..width))
+        .zip(img.buf_mut().iter_mut())
+        .par_bridge()
+        .map(|((y, x), pixel)| {
             let mut total_color = ColorRGB::origin();
 
             for _ in 0..ns {
-                let (u, v) = ((i as f32 + rand::random::<f32>()) / width as f32,
-                                        (j as f32 + rand::random::<f32>()) / height as f32);
+                let (u, v) = ((x as f32 + rand::random::<f32>()) / width as f32,
+                              (y as f32 + rand::random::<f32>()) / height as f32);
                 let ray = camera.get_ray((u, v));
 
-                total_color += color(&ray, &scene);
+                total_color += color(&ray, &scene, 0);
             }
             total_color /= ns as f32;
             total_color = total_color.gamma_correction(2f32);
 
-            img[(i, j)] = total_color;
-        }
-    }
+            *pixel = total_color;
+        }).collect::<()>();
 }
 
 enum Error {
@@ -71,14 +78,28 @@ impl From<std::io::Error> for Error {
 fn run() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
 
+//    let (width, height) = (1920, 1080);
     let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
     let mut scene = HitList::new();
-    scene.add( Box::new(Sphere::new(Vec3::new(0f32, 0f32, -1f32), 0.5f32)));
-    scene.add( Box::new(Sphere::new(Vec3::new(-1f32, 0f32, -1f32), 0.5f32)));
-    scene.add( Box::new(Sphere::new(Vec3::new(1f32, 0f32, -1f32), 0.5f32)));
-    scene.add( Box::new(Sphere::new(Vec3::new(0f32, -100.5f32, -1f32), 100f32)));
+
+    let z = -1.2;
+    let dist = 1.15;
+    let floor_radius = 25.;
+
+    // right
+    scene.add(Box::new(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
+                                   Arc::new(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0)))));
+    // center
+    scene.add(Box::new(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32,
+                                   Arc::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))));
+    // left
+    scene.add(Box::new(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32,
+                                   Arc::new(Metal::new(Vec3::new(0.5, 0.8, 0.4), 0.4)))));
+    // flor
+    scene.add(Box::new(Sphere::new(Vec3::new(0f32, -floor_radius - 0.5f32, -1f32), floor_radius,
+                                   Arc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.0)))));
 
     draw_scene(&mut img, &scene);
 
@@ -99,11 +120,11 @@ fn main() {
                 Error::ArgParse => {
                     eprintln!("wrong number params, expect 1 or 2.");
                     1
-                },
+                }
                 Error::Io(err) => {
                     eprintln!("{}", err);
                     2
-                },
+                }
             }
         }
     };

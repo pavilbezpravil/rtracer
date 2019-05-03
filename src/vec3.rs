@@ -70,17 +70,17 @@ impl Vec3 {
 
     pub fn cross(&self, rhs: &Vec3) -> Vec3 {
         Vec3::new(
-            self.y() * rhs.z() - self.z() *rhs.y(),
-            self.z() * rhs.x() - self.x() *rhs.z(),
-            self.x() * rhs.y() - self.y() *rhs.x(),
+            self.y() * rhs.z() - self.z() * rhs.y(),
+            self.z() * rhs.x() - self.x() * rhs.z(),
+            self.x() * rhs.y() - self.y() * rhs.x(),
         )
     }
 
-    pub fn make_unit(&mut self) -> &mut Vec3 {
-        // TODO: self.length() == 0
+    pub fn make_unit(&self) -> Vec3 {
         debug_assert!(self.length() > 2. * std::f32::EPSILON);
-        *self /= self.length();
-        self
+        let mut unit = *self;
+        unit /= self.length();
+        unit
     }
 }
 
