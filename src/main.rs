@@ -1,7 +1,6 @@
 extern crate rtracer;
 extern crate rand;
 extern crate rayon;
-extern crate itertools;
 
 use std::sync::Arc;
 
@@ -47,7 +46,7 @@ fn draw_scene(img: &mut Image, scene: &HitList) {
     iproduct!((0..height), (0..width))
         .zip(img.buf_mut().iter_mut())
         .par_bridge()
-        .map(|((y, x), pixel)| {
+        .for_each(|((y, x), pixel)| {
             let mut total_color = ColorRGB::origin();
 
             for _ in 0..ns {
@@ -61,7 +60,7 @@ fn draw_scene(img: &mut Image, scene: &HitList) {
             total_color = total_color.gamma_correction(2f32);
 
             *pixel = total_color;
-        }).collect::<()>();
+        });
 }
 
 enum Error {
@@ -103,29 +102,23 @@ fn run() -> Result<(), Error> {
 
     draw_scene(&mut img, &scene);
 
-    match args.len() {
+    Ok(match args.len() {
         1 => img.write_ppm(&mut std::io::stdout().lock())?,
         2 => img.write_ppm(&mut std::fs::File::create(&args[1])?)?,
         _ => return Err(Error::ArgParse),
-    };
-
-    Ok(())
+    })
 }
 
 fn main() {
     let exit_code = match run() {
         Ok(_) => 0,
-        Err(err) => {
-            match err {
-                Error::ArgParse => {
-                    eprintln!("wrong number params, expect 1 or 2.");
-                    1
-                }
-                Error::Io(err) => {
-                    eprintln!("{}", err);
-                    2
-                }
-            }
+        Err(Error::ArgParse) => {
+            eprintln!("wrong number params, expect 1 or 2.");
+            1
+        }
+        Err(Error::Io(err)) => {
+            eprintln!("{}", err);
+            2
         }
     };
 

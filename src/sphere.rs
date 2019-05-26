@@ -3,15 +3,16 @@ use std::sync::Arc;
 use crate::{Vec3, Scatter};
 use crate::Ray;
 use crate::{Hit, HitRecord};
+use std::fs::read;
 
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
-    pub material: Arc<dyn Scatter + Send + Sync>,
+    pub material: Arc<dyn Scatter>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Arc<dyn Scatter + Send + Sync>) -> Sphere {
+    pub fn new(center: Vec3, radius: f32, material: Arc<dyn Scatter>) -> Sphere {
         Sphere { center, radius, material }
     }
 }
@@ -33,20 +34,19 @@ impl Hit for Sphere {
 
         let discriminant_root = discriminant.sqrt();
 
-        let t = (-b - discriminant_root) / a;
-        if t < t_max && t > t_min {
-            let point = ray.point_at_parameter(t);
-            let normal = (point - sphere.center) / sphere.radius;
-            return Some(HitRecord::new(t, point, normal, &*self.material));
-        }
+        let t1 = (-b - discriminant_root) / a;
+        let t2 = (-b + discriminant_root) / a;
 
-        let t = (-b + discriminant_root) / a;
-        if t < t_max && t > t_min {
-            let point = ray.point_at_parameter(t);
-            let normal = (point - sphere.center) / sphere.radius;
-            return Some(HitRecord::new(t, point, normal, &*self.material));
-        }
+        let t = if t1 < t_max && t1 > t_min {
+            t1
+        } else if t2 < t_max && t2 > t_min {
+            t2
+        } else {
+            return None;
+        };
 
-        None
+        let point = ray.point_at_parameter(t);
+        let normal = (point - sphere.center) / sphere.radius;
+        Some(HitRecord::new(t, point, normal, &*self.material))
     }
 }

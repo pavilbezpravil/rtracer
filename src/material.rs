@@ -44,8 +44,8 @@ impl Scatter for Metal {
 
 fn random_in_unit_sphere() -> Vec3 {
     let sphere = UnitSphereSurface::new();
-    let ns = sphere.sample(&mut rand::thread_rng());
-    [ns[0] as f32, ns[1] as f32, ns[2] as f32].into()
+    let [x, y, z] = sphere.sample(&mut rand::thread_rng());
+    [x as f32, y as f32, z as f32].into()
 }
 
 fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {

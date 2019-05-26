@@ -11,6 +11,6 @@ impl ScatteredRay {
     }
 }
 
-pub trait Scatter {
+pub trait Scatter: Send + Sync {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatteredRay>;
 }

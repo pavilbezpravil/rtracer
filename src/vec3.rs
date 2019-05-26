@@ -4,7 +4,6 @@ use std::ops::{Sub, SubAssign};
 use std::ops::{Mul, MulAssign};
 use std::ops::{Div, DivAssign};
 
-#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3([f32; 3]);
 
 impl Vec3 {
@@ -26,18 +25,6 @@ impl Vec3 {
 
     pub fn new_z() -> Vec3 {
         Vec3::K
-    }
-
-    pub fn new_nx() -> Vec3 {
-        -Vec3::new_x()
-    }
-
-    pub fn new_ny() -> Vec3 {
-        -Vec3::new_y()
-    }
-
-    pub fn new_nz() -> Vec3 {
-        -Vec3::new_z()
     }
 
     pub fn origin() -> Vec3 {

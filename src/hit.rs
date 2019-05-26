@@ -5,11 +5,11 @@ pub struct HitRecord<'a> {
     pub t: f32,
     pub point: Vec3,
     pub normal: Vec3,
-    pub scatter: &'a (dyn Scatter + Sync),
+    pub scatter: &'a dyn Scatter,
 }
 
 impl<'a> HitRecord<'a> {
-    pub fn new(t: f32, point: Vec3, normal: Vec3, scatter: &(Scatter + Sync)) -> HitRecord {
+    pub fn new(t: f32, point: Vec3, normal: Vec3, scatter: &Scatter) -> HitRecord {
         HitRecord { t, point, normal, scatter }
     }
 }
