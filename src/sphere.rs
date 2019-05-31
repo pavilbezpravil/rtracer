@@ -3,7 +3,6 @@ use std::sync::Arc;
 use crate::{Vec3, Scatter};
 use crate::Ray;
 use crate::{Hit, HitRecord};
-use std::fs::read;
 
 pub struct Sphere {
     pub center: Vec3,

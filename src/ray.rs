@@ -9,9 +9,7 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Vec3, direction: Vec3) -> Ray {
-        let mut direction = direction;
-        direction.make_unit();
-        Ray { origin, direction }
+        Ray { origin, direction: direction.make_unit() }
     }
 
     pub fn point_at_parameter(&self, t: f32) -> Vec3 {

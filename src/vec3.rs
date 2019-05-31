@@ -4,6 +4,9 @@ use std::ops::{Sub, SubAssign};
 use std::ops::{Mul, MulAssign};
 use std::ops::{Div, DivAssign};
 
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Vec3([f32; 3]);
 
 impl Vec3 {
