@@ -8,3 +8,5 @@ edition = "2018"
 rand = "*"
 rayon = "*"
 itertools = "*"
+serde = { version = "*", features = ["derive", "rc"] }
+serde_json = "*"
