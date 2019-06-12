@@ -10,6 +10,7 @@ pub struct HitRecord<'a> {
 
 impl<'a> HitRecord<'a> {
     pub fn new(t: f32, point: Vec3, normal: Vec3, scatter: &Scatter) -> HitRecord {
+        debug_assert!(relative_eq!(normal.squared_length(), 1., epsilon = std::f32::EPSILON *  4.));
         HitRecord { t, point, normal, scatter }
     }
 }

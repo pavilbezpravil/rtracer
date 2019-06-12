@@ -22,8 +22,8 @@ impl Hit for Sphere {
         let oc = ray.origin - sphere.center;
 
         let a = ray.direction.squared_length();
-        let b = ray.direction.dot(&oc);
-        let c = oc.dot(&oc) - sphere.radius * sphere.radius;
+        let b = Vec3::dot(&ray.direction, &oc);
+        let c = Vec3::dot(&oc, &oc) - sphere.radius * sphere.radius;
 
         let discriminant = b * b - a * c;
 
@@ -46,6 +46,6 @@ impl Hit for Sphere {
 
         let point = ray.point_at_parameter(t);
         let normal = (point - sphere.center) / sphere.radius;
-        Some(HitRecord::new(t, point, normal, &*self.material))
+        Some(HitRecord::new(t, point, normal.make_unit(), &*self.material))
     }
 }

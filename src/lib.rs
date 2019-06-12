@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate approx;
+
 mod image;
 mod vec3;
 mod ray;
@@ -16,4 +19,4 @@ pub use hit_list::HitList;
 pub use sphere::Sphere;
 pub use camera::Camera;
 pub use scatter::{Scatter, ScatteredRay};
-pub use material::{Lambertian, Metal};
+pub use material::{Lambertian, Metal, Dielectric};

@@ -10,3 +10,4 @@ rayon = "*"
 itertools = "*"
 serde = { version = "*", features = ["derive", "rc"] }
 serde_json = "*"
+approx = "*"

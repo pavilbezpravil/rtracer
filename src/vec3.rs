@@ -54,8 +54,8 @@ impl Vec3 {
         self.x().powi(2) + self.y().powi(2) + self.z().powi(2)
     }
 
-    pub fn dot(&self, rhs: &Vec3) -> f32 {
-        self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
+    pub fn dot(lhs: &Vec3, rhs: &Vec3) -> f32 {
+        lhs.x() * rhs.x() + lhs.y() * rhs.y() + lhs.z() * rhs.z()
     }
 
     pub fn cross(&self, rhs: &Vec3) -> Vec3 {

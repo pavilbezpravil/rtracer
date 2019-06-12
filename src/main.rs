@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal};
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
@@ -78,6 +78,7 @@ fn run() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
 
 //    let (width, height) = (1920, 1080);
+//    let (width, height) = (640, 480);
     let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
@@ -95,10 +96,12 @@ fn run() -> Result<(), Error> {
                                    Arc::new(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))));
     // left
     scene.add(Box::new(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32,
-                                   Arc::new(Metal::new(Vec3::new(0.5, 0.8, 0.4), 0.4)))));
+                                   Arc::new(Dielectric::new(1.5)))));
+    scene.add(Box::new(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32,
+                                   Arc::new(Dielectric::new(1.5)))));
     // flor
     scene.add(Box::new(Sphere::new(Vec3::new(0f32, -floor_radius - 0.5f32, -1f32), floor_radius,
-                                   Arc::new(Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.0)))));
+                                   Arc::new(Metal::new(Vec3::new(0.1, 0.8, 0.1), 0.0)))));
 
     draw_scene(&mut img, &scene);
 
