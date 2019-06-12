@@ -3,15 +3,16 @@ use std::sync::Arc;
 use crate::{Vec3, Scatter};
 use crate::Ray;
 use crate::{Hit, HitRecord};
+use crate::material::Material;
 
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
-    pub material: Arc<dyn Scatter>,
+    pub material: Arc<Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Arc<dyn Scatter>) -> Sphere {
+    pub fn new(center: Vec3, radius: f32, material: Arc<Material>) -> Sphere {
         Sphere { center, radius, material }
     }
 }

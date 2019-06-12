@@ -5,6 +5,38 @@ use crate::{Scatter, ScatteredRay};
 use crate::{Ray, HitRecord};
 use rand::Rng;
 
+#[derive(Clone, Copy)]
+pub enum Material {
+    Lambertian(Lambertian),
+    Metal(Metal),
+    Dielectric(Dielectric),
+}
+
+impl Material {
+    pub fn new_lambertian(lambertian: Lambertian) -> Material {
+        Material::Lambertian(lambertian)
+    }
+
+    pub fn new_metal(metal: Metal) -> Material {
+        Material::Metal(metal)
+    }
+
+    pub fn new_dielectric(dielectric: Dielectric) -> Material {
+        Material::Dielectric(dielectric)
+    }
+}
+
+impl Scatter for Material {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatteredRay> {
+        match self {
+            Material::Lambertian(m) => m.scatter(ray, hit),
+            Material::Metal(m) => m.scatter(ray, hit),
+            Material::Dielectric(m) => m.scatter(ray, hit),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct Lambertian {
     pub albedo: Vec3,
 }
@@ -22,6 +54,7 @@ impl Scatter for Lambertian {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Metal {
     pub albedo: Vec3,
     pub fuzz: f32,
@@ -43,6 +76,7 @@ impl Scatter for Metal {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Dielectric {
     pub ref_idx: f32,
 }

@@ -19,4 +19,4 @@ pub use hit_list::HitList;
 pub use sphere::Sphere;
 pub use camera::Camera;
 pub use scatter::{Scatter, ScatteredRay};
-pub use material::{Lambertian, Metal, Dielectric};
+pub use material::{Material, Lambertian, Metal, Dielectric};
