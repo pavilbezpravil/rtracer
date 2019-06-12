@@ -291,8 +291,8 @@ mod tests {
         let v2 = Vec3::new(10f32, 20f32, 30f32);
         let res = (10 + 40 + 90) as f32;
 
-        assert_eq!(v1.dot(&v2), res);
-        assert_eq!(v2.dot(&v1), res);
+        assert_eq!(Vec3::dot(&v1, &v2), res);
+        assert_eq!(Vec3::dot(&v2, &v1), res);
     }
 
     #[test]

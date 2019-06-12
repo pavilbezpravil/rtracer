@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material};
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
@@ -74,24 +74,25 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
 
     let z = -1.2;
     let dist = 1.15;
-    let floor_radius = 50.;
 
     // right
-    scene.add(Box::new(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
-                                   Arc::new(Material::Metal(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0))))));
+    scene.add(Box::new( Shape::Sphere(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
+                                   Arc::new(Material::Metal(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0)))))));
     // center
-    scene.add(Box::new(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32,
-                                   Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3)))))));
+    scene.add(Box::new( Shape::Sphere(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32,
+                                   Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))))));
     // left
-    scene.add(Box::new(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32,
-                                   Arc::new(Material::Dielectric(Dielectric::new(1.5))))));
-    scene.add(Box::new(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32,
-                                   Arc::new(Material::Dielectric(Dielectric::new(1.5))))));
-    // flor
-    scene.add(Box::new(Sphere::new(Vec3::new(0f32, -floor_radius - 0.5f32, -1f32), floor_radius,
-                                   Arc::new(Material::Metal(Metal::new(Vec3::new(0.0, 0.6, 0.0), 0.))))));
+    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32,
+                                   Arc::new(Material::Dielectric(Dielectric::new(1.5)))))));
+    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32,
+                                   Arc::new(Material::Dielectric(Dielectric::new(1.5)))))));
 
-    let camera = Camera::new(Vec3::new(-2., 0.,0.), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+    // flor
+    scene.add(Box::new(Shape::Plane(Plane::new(-1. * Vec3::new_y(), Vec3::new_y(),
+                                               Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.0, 0.6, 0.0))))))));
+//                                               Arc::new(Material::Metal(Metal::new(Vec3::new(0.0, 0.6, 0.0), 0.)))))));
+
+    let camera = Camera::new(Vec3::new(-2., 0.5,0.), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
     (scene, camera)
 }
@@ -100,8 +101,8 @@ fn run() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
 
 //    let (width, height) = (1920, 1080);
-    let (width, height) = (640, 480);
-//    let (width, height) = (200, 100);
+//    let (width, height) = (640, 480);
+    let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
     let (scene, camera) = test_scene_dielectric((width, height));

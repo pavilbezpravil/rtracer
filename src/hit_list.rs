@@ -1,8 +1,8 @@
-use crate::Ray;
+use crate::{Ray, Shape};
 use crate::{Hit, HitRecord};
 
 pub struct HitList {
-    hittable: Vec<Box<dyn Hit + Sync>>,
+    hittable: Vec<Box<Shape>>,
 }
 
 impl HitList {
@@ -10,7 +10,7 @@ impl HitList {
         HitList { hittable: Vec::new() }
     }
 
-    pub fn add(&mut self, obj: Box<dyn Hit + Sync>) {
+    pub fn add(&mut self, obj: Box<Shape>) {
         self.hittable.push(obj)
     }
 }
