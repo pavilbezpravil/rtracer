@@ -44,8 +44,9 @@ impl Hit for Sphere {
             return None;
         };
 
-        let point = ray.point_at_parameter(t);
-        let normal = (point - sphere.center) / sphere.radius;
-        Some(HitRecord::new(t, point, normal.make_unit(), &*self.material))
+        let mut point = ray.point_at_parameter(t);
+        let normal = ((point - sphere.center) / sphere.radius).make_unit();
+        point += normal * 50. * std::f32::EPSILON; // TODO:
+        Some(HitRecord::new(t, point, normal, &*self.material))
     }
 }

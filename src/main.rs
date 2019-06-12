@@ -31,15 +31,8 @@ fn color(ray: &Ray, scene: &HitList, depth: u32) -> ColorRGB {
     }
 }
 
-fn draw_scene(img: &mut Image, scene: &HitList) {
+fn draw_scene(img: &mut Image, scene: &HitList, camera: &Camera) {
     let (width, height) = (img.width(), img.height());
-
-    let ul = Vec3::new(-2f32, 1f32, -1f32);
-    let horizontal = 4f32 * Vec3::new_x();
-    let vertical = -2f32 * Vec3::new_y();
-
-    let camera_pos = Vec3::origin();
-    let camera = Camera::new(camera_pos, ul, horizontal, vertical);
 
     let ns = 100u32;
 
@@ -74,19 +67,12 @@ impl From<std::io::Error> for Error {
     }
 }
 
-fn run() -> Result<(), Error> {
-    let args: Vec<String> = std::env::args().collect();
-
-//    let (width, height) = (1920, 1080);
-//    let (width, height) = (640, 480);
-    let (width, height) = (200, 100);
-    let mut img = Image::new(width, height);
-
+fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
     let mut scene = HitList::new();
 
     let z = -1.2;
     let dist = 1.15;
-    let floor_radius = 25.;
+    let floor_radius = 50.;
 
     // right
     scene.add(Box::new(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
@@ -101,9 +87,29 @@ fn run() -> Result<(), Error> {
                                    Arc::new(Dielectric::new(1.5)))));
     // flor
     scene.add(Box::new(Sphere::new(Vec3::new(0f32, -floor_radius - 0.5f32, -1f32), floor_radius,
-                                   Arc::new(Metal::new(Vec3::new(0.1, 0.8, 0.1), 0.0)))));
+                                   Arc::new(Metal::new(Vec3::new(0.0, 1.0, 0.0), 0.0)))));
 
-    draw_scene(&mut img, &scene);
+    let ul = Vec3::new(-2f32, 1f32, -1f32);
+    let horizontal = 4f32 * Vec3::new_x();
+    let vertical = -2f32 * Vec3::new_y();
+
+    let camera_pos = Vec3::origin();
+    let camera = Camera::new(Vec3::new(-2., 2., 1.), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+
+    (scene, camera)
+}
+
+fn run() -> Result<(), Error> {
+    let args: Vec<String> = std::env::args().collect();
+
+//    let (width, height) = (1920, 1080);
+//    let (width, height) = (640, 480);
+    let (width, height) = (200, 100);
+    let mut img = Image::new(width, height);
+
+    let (scene, camera) = test_scene_dielectric((width, height));
+
+    draw_scene(&mut img, &scene, &camera);
 
     Ok(match args.len() {
         1 => img.write_ppm(&mut std::io::stdout().lock())?,
