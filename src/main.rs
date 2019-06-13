@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape, Cube};
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape, Cube, Triangle};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
@@ -23,7 +23,7 @@ fn normal_to_color(normal: &Vec3) -> Vec3 {
 }
 
 fn color(ray: &Ray, scene: &HitList, depth: u32) -> ColorRGB {
-    if let Some(rec) = scene.hit(ray, (0.00001f32, std::f32::MAX)) {
+    if let Some(rec) = scene.hit(ray, (1e-5, std::f32::MAX)) {
         if let Some(scattered) = rec.material.scatter(ray, &rec) {
             if depth < MAX_RAY_DEPTH {
                 return scattered.attenuation * color(&scattered.ray, scene, depth + 1);
@@ -109,6 +109,20 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
     (scene, camera)
 }
 
+fn test_scene_triangle((width, height): (u32, u32)) -> (HitList, Camera) {
+    let mut scene = HitList::new();
+
+    let size = 1.;
+
+    // big cube
+    scene.add(Box::new(Shape::Triangle(Triangle::new( size * Vec3::new(-1.0, 0., 0.), size * Vec3::new(1., 0., 0.), size * Vec3::new(0., 1., 0.),
+                                             Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02))))))));
+
+    let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+
+    (scene, camera)
+}
+
 fn run() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
 
@@ -117,7 +131,8 @@ fn run() -> Result<(), Error> {
     let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
-    let (scene, camera) = test_scene_dielectric((width, height));
+//    let (scene, camera) = test_scene_dielectric((width, height));
+    let (scene, camera) = test_scene_triangle((width, height));
 
     draw_scene(&mut img, &scene, &camera);
 

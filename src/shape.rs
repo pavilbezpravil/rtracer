@@ -1,4 +1,4 @@
-use crate::{Sphere, Hit};
+use crate::{Sphere, Hit, Triangle};
 use crate::Plane;
 use crate::Ray;
 use crate::HitRecord;
@@ -8,6 +8,7 @@ pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
     Cube(Cube),
+    Triangle(Triangle),
 }
 
 impl Hit for Shape {
@@ -16,6 +17,7 @@ impl Hit for Shape {
             Shape::Plane(s) => s.hit(ray, t_min_max),
             Shape::Sphere(s) => s.hit(ray, t_min_max),
             Shape::Cube(s) => s.hit(ray, t_min_max),
+            Shape::Triangle(s) => s.hit(ray, t_min_max),
         }
     }
 }

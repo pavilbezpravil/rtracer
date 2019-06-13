@@ -1,4 +1,5 @@
 use crate::{Ray, Vec3, Sphere, Plane, Aabb};
+use crate::triangle::Triangle;
 
 pub fn ray_sphere_intersection(ray: &Ray, sphere: &Sphere) -> Option<f32> {
     let oc = ray.origin - sphere.center;
@@ -76,4 +77,35 @@ pub fn ray_box_intersection(ray: &Ray, aabb: &Aabb) -> Option<(f32, f32)> {
     } else {
         None
     }
+}
+
+pub fn ray_triangle_intersection(ray: &Ray, triangle: &Triangle) -> Option<f32> {
+    moller_trumbore_algorithm(ray, triangle)
+}
+
+fn moller_trumbore_algorithm(ray: &Ray, triangle: &Triangle) -> Option<f32> {
+    let e1 = triangle.v1 - triangle.v0;
+    let e2 = triangle.v2 - triangle.v0;
+
+    let pvec = ray.direction.cross(&e2);
+    let det = Vec3::dot(&e1, &pvec);
+
+    if det.abs() < 2. * std::f32::EPSILON {
+        return None
+    }
+
+    let inv_det = 1. / det;
+    let tvec = ray.origin - triangle.v0;
+    let u = Vec3::dot(&tvec, &pvec) * inv_det;
+    if u < 0. || u > 1. {
+        return None
+    }
+
+    let qvec = tvec.cross(&e1);
+    let v = Vec3::dot(&ray.direction, &qvec) * inv_det;
+    if v < 0. || u + v > 1. {
+        return None
+    }
+
+    Some(Vec3::dot(&e2, &qvec) * inv_det)
 }
