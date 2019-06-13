@@ -1,21 +1,17 @@
-use std::sync::Arc;
-
-use crate::{Vec3, Scatter};
+use crate::Vec3;
 use crate::Ray;
-use crate::{Hit, HitRecord};
-use crate::material::Material;
+use crate::Intersect;
 use crate::intersection::ray_triangle_intersection;
 
 pub struct Triangle {
     pub v0: Vec3,
     pub v1: Vec3,
     pub v2: Vec3,
-    pub material: Arc<Material>,
 }
 
 impl Triangle {
-    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material: Arc<Material>) -> Triangle {
-        Triangle { v0, v1, v2, material }
+    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3) -> Triangle {
+        Triangle { v0, v1, v2 }
     }
 
     pub fn normal(&self) -> Vec3 {
@@ -23,12 +19,11 @@ impl Triangle {
     }
 }
 
-impl Hit for Triangle {
-    fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
+impl Intersect for Triangle {
+    fn intersect(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<f32> {
         if let Some(t) = ray_triangle_intersection(ray, self) {
             if t_min < t && t < t_max {
-                let point = ray.point_at_parameter(t);
-                return Some(HitRecord::new(t, point, self.normal(), &*self.material))
+                return Some(t)
             }
         }
 

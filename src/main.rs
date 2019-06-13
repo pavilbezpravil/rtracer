@@ -2,13 +2,11 @@ extern crate rtracer;
 extern crate rand;
 extern crate rayon;
 
-use std::sync::Arc;
-
 use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape, Cube, Triangle, Disk};
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Cube, Triangle, Disk, Object};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
@@ -80,29 +78,25 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
     let dist = 1.15;
 
     // right
-    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
-                                                 Arc::new(Material::Metal(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0)))))));
+    scene.add(Object::new_sphere(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32),
+                                 Material::Metal(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0))));
     // center
-    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32,
-                                                 Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))))));
+    scene.add(Object::new_sphere(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32),
+                                 Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3)))));
     // left
-    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32,
-                                                 Arc::new(Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5)))))));
-    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32,
-                                                 Arc::new(Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5)))))));
+    scene.add(Object::new_sphere(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32),
+                                 Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5))));
+    scene.add(Object::new_sphere(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32),
+                                 Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5))));
 
     // flor
-    scene.add(Box::new(Shape::Plane(Plane::new(-1. * Vec3::new_y(), Vec3::new_y(),
-                                               Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.0, 0.6, 0.0))))))));
+    scene.add(Object::new_plane(Plane::new(-1. * Vec3::new_y(), Vec3::new_y()),
+                                Material::Lambertian(Lambertian::new(Vec3::new(0.0, 0.6, 0.0)))));
 //                                               Arc::new(Material::Metal(Metal::new(Vec3::new(0.0, 0.6, 0.0), 0.)))))));
 
     // big cube
-    scene.add(Box::new(Shape::Cube(Cube::new(Vec3::new(4.0, 0., 0.), 4. * Vec3::unit(),
-                                             Arc::new(Material::Metal(Metal::new(Vec3::new(0.37, 0.15, 0.02), 0.)))))));
-
-    // water cube
-//    scene.add(Box::new(Shape::Cube(Cube::new(Vec3::new(-1.0, 0.5, 0.), 1. * Vec3::unit(),
-//                                             Arc::new(Material::Dielectric(Dielectric::new(Vec3::new(0.22, 0.99, 0.99), 1.5)))))));
+    scene.add(Object::new_cube(Cube::new(Vec3::new(4.0, 0., 0.), 4. * Vec3::unit()),
+                               Material::Metal(Metal::new(Vec3::new(0.37, 0.15, 0.02), 0.))));
 
     let camera = Camera::new(Vec3::new(-2., 0.75, 0.25), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
@@ -114,8 +108,8 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (HitList, Camera) {
 
     let size = 1.;
 
-    scene.add(Box::new(Shape::Triangle(Triangle::new( size * Vec3::new(-1.0, 0., 0.), size * Vec3::new(1., 0., 0.), size * Vec3::new(0., 1., 0.),
-                                             Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02))))))));
+    scene.add(Object::new_triangle(Triangle::new(size * Vec3::new(-1.0, 0., 0.), size * Vec3::new(1., 0., 0.), size * Vec3::new(0., 1., 0.)),
+                                   Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
 
     let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
@@ -125,11 +119,8 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (HitList, Camera) {
 fn test_scene_disk((width, height): (u32, u32)) -> (HitList, Camera) {
     let mut scene = HitList::new();
 
-    let size = 1.;
-
-    scene.add(Box::new(Shape::Disk(Disk::new(Plane::new(-Vec3::new_z(), Vec3::new_z(),
-                                                        Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02))))),
-                                                      1.))));
+    scene.add(Object::new_disk(Disk::new(Plane::new(-Vec3::new_z(), Vec3::new_z()), 1.),
+                               Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
 
     let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
@@ -144,9 +135,9 @@ fn run() -> Result<(), Error> {
     let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
-//    let (scene, camera) = test_scene_dielectric((width, height));
+    let (scene, camera) = test_scene_dielectric((width, height));
 //    let (scene, camera) = test_scene_triangle((width, height));
-    let (scene, camera) = test_scene_disk((width, height));
+//    let (scene, camera) = test_scene_disk((width, height));
 
     draw_scene(&mut img, &scene, &camera);
 

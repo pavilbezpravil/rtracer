@@ -110,7 +110,6 @@ fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
 }
 
 fn refract(v: &Vec3, n: &Vec3, n_ref: f32) -> Option<Vec3> {
-    let a = n.squared_length();
     debug_assert!(relative_eq!(n.squared_length(), 1., epsilon = std::f32::EPSILON *  4.));
 
     let uv = v.make_unit();

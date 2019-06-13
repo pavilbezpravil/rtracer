@@ -1,4 +1,4 @@
-use crate::{Vec3, Scatter};
+use crate::Vec3;
 use crate::Ray;
 use crate::material::Material;
 

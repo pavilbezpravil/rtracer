@@ -1,8 +1,8 @@
-use crate::{Sphere, Hit, Triangle, Disk};
+use crate::{Sphere, Triangle, Disk};
 use crate::Plane;
 use crate::Ray;
-use crate::HitRecord;
 use crate::cube::Cube;
+use crate::intersect::Intersect;
 
 pub enum Shape {
     Sphere(Sphere),
@@ -12,14 +12,14 @@ pub enum Shape {
     Disk(Disk),
 }
 
-impl Hit for Shape {
-    fn hit(&self, ray: &Ray, t_min_max: (f32, f32)) -> Option<HitRecord> {
+impl Intersect for Shape {
+    fn intersect(&self, ray: &Ray, t_min_max: (f32, f32)) -> Option<f32> {
         match self {
-            Shape::Plane(s) => s.hit(ray, t_min_max),
-            Shape::Sphere(s) => s.hit(ray, t_min_max),
-            Shape::Cube(s) => s.hit(ray, t_min_max),
-            Shape::Triangle(s) => s.hit(ray, t_min_max),
-            Shape::Disk(s) => s.hit(ray, t_min_max),
+            Shape::Plane(s) => s.intersect(ray, t_min_max),
+            Shape::Sphere(s) => s.intersect(ray, t_min_max),
+            Shape::Cube(s) => s.intersect(ray, t_min_max),
+            Shape::Triangle(s) => s.intersect(ray, t_min_max),
+            Shape::Disk(s) => s.intersect(ray, t_min_max),
         }
     }
 }
