@@ -12,20 +12,6 @@ pub enum Material {
     Dielectric(Dielectric),
 }
 
-impl Material {
-    pub fn new_lambertian(lambertian: Lambertian) -> Material {
-        Material::Lambertian(lambertian)
-    }
-
-    pub fn new_metal(metal: Metal) -> Material {
-        Material::Metal(metal)
-    }
-
-    pub fn new_dielectric(dielectric: Dielectric) -> Material {
-        Material::Dielectric(dielectric)
-    }
-}
-
 impl Scatter for Material {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatteredRay> {
         match self {
@@ -78,12 +64,13 @@ impl Scatter for Metal {
 
 #[derive(Clone, Copy)]
 pub struct Dielectric {
+    pub attenuation: Vec3,
     pub ref_idx: f32,
 }
 
 impl Dielectric {
-    pub fn new(ref_idx: f32) -> Dielectric {
-        Dielectric { ref_idx }
+    pub fn new(attenuation: Vec3, ref_idx: f32) -> Dielectric {
+        Dielectric { attenuation, ref_idx }
     }
 }
 
@@ -108,8 +95,7 @@ impl Scatter for Dielectric {
             reflected
         };
 
-        let attenuation = Vec3::new(1., 1., 1.);
-        Some(ScatteredRay::new(Ray::new(hit.point, dir), attenuation))
+        Some(ScatteredRay::new(Ray::new(hit.point, dir), self.attenuation))
     }
 }
 

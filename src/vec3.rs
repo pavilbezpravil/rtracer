@@ -10,9 +10,9 @@ use serde::{Serialize, Deserialize};
 pub struct Vec3([f32; 3]);
 
 impl Vec3 {
-    pub const I: Vec3 = Vec3([1.0, 0.0, 0.0]);
-    pub const J: Vec3 = Vec3([0.0, 1.0, 0.0]);
-    pub const K: Vec3 = Vec3([0.0, 0.0, 1.0]);
+    pub const I: Vec3 = Vec3([1., 0., 0.]);
+    pub const J: Vec3 = Vec3([0., 1., 0.]);
+    pub const K: Vec3 = Vec3([0., 0., 1.]);
 
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3([x, y, z])
@@ -31,7 +31,11 @@ impl Vec3 {
     }
 
     pub fn origin() -> Vec3 {
-        Vec3::new(0f32, 0f32, 0f32)
+        Vec3::new(0., 0., 0.)
+    }
+
+    pub fn unit() -> Vec3 {
+        Vec3::new(1., 1., 1.)
     }
 
     pub fn x(&self) -> f32 {

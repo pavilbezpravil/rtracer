@@ -4,6 +4,7 @@ use crate::{Vec3, Scatter};
 use crate::Ray;
 use crate::{Hit, HitRecord};
 use crate::material::Material;
+use crate::intersection::ray_sphere_intersection;
 
 pub struct Sphere {
     pub center: Vec3,
@@ -19,35 +20,17 @@ impl Sphere {
 
 impl Hit for Sphere {
     fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
-        let sphere = self;
-        let oc = ray.origin - sphere.center;
+        debug_assert!(t_min >= 0.);
 
-        let a = ray.direction.squared_length();
-        let b = Vec3::dot(&ray.direction, &oc);
-        let c = Vec3::dot(&oc, &oc) - sphere.radius * sphere.radius;
-
-        let discriminant = b * b - a * c;
-
-        if discriminant < 0f32 {
-            return None;
+        if let Some(t) = ray_sphere_intersection(ray, self) {
+            if t_min < t && t < t_max {
+                let mut point = ray.point_at_parameter(t);
+                let normal = ((point - self.center) / self.radius).make_unit();
+                point += normal * 50. * std::f32::EPSILON; // TODO:
+                return Some(HitRecord::new(t, point, normal, &*self.material))
+            }
         }
 
-        let discriminant_root = discriminant.sqrt();
-
-        let t1 = (-b - discriminant_root) / a;
-        let t2 = (-b + discriminant_root) / a;
-
-        let t = if t1 < t_max && t1 > t_min {
-            t1
-        } else if t2 < t_max && t2 > t_min {
-            t2
-        } else {
-            return None;
-        };
-
-        let mut point = ray.point_at_parameter(t);
-        let normal = ((point - sphere.center) / sphere.radius).make_unit();
-        point += normal * 50. * std::f32::EPSILON; // TODO:
-        Some(HitRecord::new(t, point, normal, &*self.material))
+        None
     }
 }

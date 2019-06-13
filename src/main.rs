@@ -8,15 +8,19 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape};
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape, Cube};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
 use rtracer::Sphere;
 use rtracer::Scatter;
 
-const MAX_RAY_DEPTH: u32 = 64;
-const RAYS_FOR_PIXEL: u32 = 128;
+const MAX_RAY_DEPTH: u32 = 32;
+const RAYS_FOR_PIXEL: u32 = 32;
+
+fn normal_to_color(normal: &Vec3) -> Vec3 {
+    (Vec3::new(1., 1., 1.) + *normal) * 0.5
+}
 
 fn color(ray: &Ray, scene: &HitList, depth: u32) -> ColorRGB {
     if let Some(rec) = scene.hit(ray, (0.00001f32, std::f32::MAX)) {
@@ -76,23 +80,31 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
     let dist = 1.15;
 
     // right
-    scene.add(Box::new( Shape::Sphere(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
-                                   Arc::new(Material::Metal(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0)))))));
+    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(dist, 0f32, z), 0.5f32,
+                                                 Arc::new(Material::Metal(Metal::new(Vec3::new(0.8, 0.6, 0.2), 0.0)))))));
     // center
-    scene.add(Box::new( Shape::Sphere(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32,
-                                   Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))))));
+    scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(0f32, 0f32, z), 0.5f32,
+                                                 Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3))))))));
     // left
     scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32,
-                                   Arc::new(Material::Dielectric(Dielectric::new(1.5)))))));
+                                                 Arc::new(Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5)))))));
     scene.add(Box::new(Shape::Sphere(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32,
-                                   Arc::new(Material::Dielectric(Dielectric::new(1.5)))))));
+                                                 Arc::new(Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5)))))));
 
     // flor
     scene.add(Box::new(Shape::Plane(Plane::new(-1. * Vec3::new_y(), Vec3::new_y(),
                                                Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.0, 0.6, 0.0))))))));
 //                                               Arc::new(Material::Metal(Metal::new(Vec3::new(0.0, 0.6, 0.0), 0.)))))));
 
-    let camera = Camera::new(Vec3::new(-2., 0.5,0.), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+    // big cube
+    scene.add(Box::new(Shape::Cube(Cube::new(Vec3::new(4.0, 0., 0.), 4. * Vec3::unit(),
+                                             Arc::new(Material::Metal(Metal::new(Vec3::new(0.37, 0.15, 0.02), 0.)))))));
+
+    // water cube
+//    scene.add(Box::new(Shape::Cube(Cube::new(Vec3::new(-1.0, 0.5, 0.), 1. * Vec3::unit(),
+//                                             Arc::new(Material::Dielectric(Dielectric::new(Vec3::new(0.22, 0.99, 0.99), 1.5)))))));
+
+    let camera = Camera::new(Vec3::new(-2., 0.75, 0.25), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
     (scene, camera)
 }
