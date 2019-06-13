@@ -21,13 +21,13 @@ impl Plane {
 
 impl Hit for Plane {
     fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
-        let t = ray_plane_intersection(ray, self);
-
-        if t_min < t && t < t_max {
-            let point = ray.point_at_parameter(t);
-            Some(HitRecord::new(t, point, self.normal, &*self.material))
-        } else {
-            None
+        if let Some(t) = ray_plane_intersection(ray, self) {
+            if t_min < t && t < t_max {
+                let point = ray.point_at_parameter(t);
+                return Some(HitRecord::new(t, point, self.normal, &*self.material))
+            }
         }
+
+        None
     }
 }

@@ -8,7 +8,7 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape, Cube, Triangle};
+use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Shape, Cube, Triangle, Disk};
 use rtracer::Ray;
 use rtracer::Hit;
 use rtracer::HitList;
@@ -114,9 +114,22 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (HitList, Camera) {
 
     let size = 1.;
 
-    // big cube
     scene.add(Box::new(Shape::Triangle(Triangle::new( size * Vec3::new(-1.0, 0., 0.), size * Vec3::new(1., 0., 0.), size * Vec3::new(0., 1., 0.),
                                              Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02))))))));
+
+    let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+
+    (scene, camera)
+}
+
+fn test_scene_disk((width, height): (u32, u32)) -> (HitList, Camera) {
+    let mut scene = HitList::new();
+
+    let size = 1.;
+
+    scene.add(Box::new(Shape::Disk(Disk::new(Plane::new(-Vec3::new_z(), Vec3::new_z(),
+                                                        Arc::new(Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02))))),
+                                                      1.))));
 
     let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
@@ -132,7 +145,8 @@ fn run() -> Result<(), Error> {
     let mut img = Image::new(width, height);
 
 //    let (scene, camera) = test_scene_dielectric((width, height));
-    let (scene, camera) = test_scene_triangle((width, height));
+//    let (scene, camera) = test_scene_triangle((width, height));
+    let (scene, camera) = test_scene_disk((width, height));
 
     draw_scene(&mut img, &scene, &camera);
 

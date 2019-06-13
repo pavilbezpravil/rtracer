@@ -1,5 +1,6 @@
 use crate::{Ray, Vec3, Sphere, Plane, Aabb};
 use crate::triangle::Triangle;
+use crate::disk::Disk;
 
 pub fn ray_sphere_intersection(ray: &Ray, sphere: &Sphere) -> Option<f32> {
     let oc = ray.origin - sphere.center;
@@ -28,18 +29,14 @@ pub fn ray_sphere_intersection(ray: &Ray, sphere: &Sphere) -> Option<f32> {
     }
 }
 
-pub fn ray_plane_intersection(ray: &Ray, plane: &Plane) -> f32 {
+pub fn ray_plane_intersection(ray: &Ray, plane: &Plane) -> Option<f32> {
     let ray_perpendicular_component = Vec3::dot(&plane.normal, &ray.direction);
 
     if ray_perpendicular_component.abs() < 2. * std::f32::EPSILON {
-        if ray_perpendicular_component > 0. {
-            std::f32::MAX
-        } else {
-            std::f32::MIN
-        }
+        None
     } else {
         let perpendicular_traverse_distance = Vec3::dot(&plane.normal, &(plane.origin - ray.origin));
-        perpendicular_traverse_distance / ray_perpendicular_component
+        Some(perpendicular_traverse_distance / ray_perpendicular_component)
     }
 }
 
@@ -108,4 +105,15 @@ fn moller_trumbore_algorithm(ray: &Ray, triangle: &Triangle) -> Option<f32> {
     }
 
     Some(Vec3::dot(&e2, &qvec) * inv_det)
+}
+
+pub fn ray_disk_intersection(ray: &Ray, disk: &Disk) -> Option<f32> {
+    if let Some(t) = ray_plane_intersection(ray, &disk.plane) {
+        let point = ray.point_at_parameter(t);
+        if (point - disk.plane.origin).squared_length() < disk.radius * disk.radius {
+            return Some(t)
+        }
+    }
+
+    None
 }
