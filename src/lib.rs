@@ -20,6 +20,8 @@ mod scatter;
 mod material;
 mod intersection;
 
+pub mod prelude;
+
 pub use image::{Image, ColorRGB};
 pub use vec3::Vec3;
 pub use ray::Ray;

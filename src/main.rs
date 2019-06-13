@@ -6,11 +6,9 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use rtracer::{Vec3, Image, ColorRGB, Camera, Lambertian, Metal, Dielectric, Material, Plane, Cube, Triangle, Disk, Object};
-use rtracer::Ray;
-use rtracer::Hit;
-use rtracer::HitList;
-use rtracer::Sphere;
+use rtracer::prelude::*;
+use rtracer::{Image, ColorRGB};
+use rtracer::{HitList, Hit};
 use rtracer::Scatter;
 
 const MAX_RAY_DEPTH: u32 = 32;
