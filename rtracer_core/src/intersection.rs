@@ -1,6 +1,4 @@
-use crate::{Ray, Vec3, Sphere, Plane, Aabb};
-use crate::triangle::Triangle;
-use crate::disk::Disk;
+use crate::prelude::*;
 
 pub fn ray_sphere_intersection(ray: &Ray, sphere: &Sphere) -> Option<f32> {
     let oc = ray.origin - sphere.center;

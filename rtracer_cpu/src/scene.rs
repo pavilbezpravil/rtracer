@@ -1,27 +1,27 @@
-use crate::{Ray, Object};
-use crate::{Hit, HitRecord};
+use rtracer_core::prelude::*;
+use crate::hit::{HitRecord, Hit};
 
-pub struct HitList {
-    hittable: Vec<Object>,
+pub struct Scene<H: Hit> {
+    hittable: Vec<H>,
 }
 
-impl HitList {
-    pub fn new() -> HitList {
-        HitList { hittable: Vec::new() }
+impl<H: Hit> Scene<H> {
+    pub fn new() -> Scene<H> {
+        Scene { hittable: Vec::new() }
     }
 
-    pub fn add(&mut self, obj: Object) {
+    pub fn add(&mut self, obj: H) {
         self.hittable.push(obj)
     }
 }
 
-impl Default for HitList {
-    fn default() -> HitList {
-        HitList::new()
+impl<H: Hit> Default for Scene<H> {
+    fn default() -> Scene<H> {
+        Scene::new()
     }
 }
 
-impl Hit for HitList {
+impl<H: Hit> Hit for Scene<H> {
     fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
         let mut ret = None;
 

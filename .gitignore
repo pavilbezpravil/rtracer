@@ -1,5 +1,10 @@
-/target
+*target
 **/*.rs.bk
 
 .idea
 Cargo.lock
+
+*.ppm
+*.sh
+
+/books

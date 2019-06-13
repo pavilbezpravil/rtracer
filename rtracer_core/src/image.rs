@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 use std::io::Write;
 
-use crate::Vec3;
+use crate::vec3::Vec3;
 
 pub type ColorRGB = Vec3;
 

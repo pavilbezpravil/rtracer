@@ -1,6 +1,6 @@
-use crate::Vec3;
-use crate::Ray;
-use crate::Intersect;
+use crate::vec3::Vec3;
+use crate::ray::Ray;
+use crate::intersect::Intersect;
 use crate::intersection::ray_triangle_intersection;
 
 pub struct Triangle {

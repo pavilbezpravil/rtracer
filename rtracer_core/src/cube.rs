@@ -1,6 +1,7 @@
-use crate::{Aabb, Vec3};
-use crate::Intersect;
-use crate::Ray;
+use crate::aabb::Aabb;
+use crate::vec3::Vec3;
+use crate::intersect::Intersect;
+use crate::ray::Ray;
 use crate::intersection::ray_box_intersection;
 
 pub struct Cube {

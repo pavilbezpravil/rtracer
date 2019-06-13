@@ -1,6 +1,6 @@
-use crate::Plane;
-use crate::Ray;
-use crate::Intersect;
+use crate::plane::Plane;
+use crate::ray:: Ray;
+use crate::intersect::Intersect;
 use crate::intersection::ray_disk_intersection;
 
 pub struct Disk {

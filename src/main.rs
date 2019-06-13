@@ -1,62 +1,14 @@
-extern crate rtracer;
 extern crate rand;
-extern crate rayon;
 
-use rayon::prelude::*;
+extern crate rtracer_core;
 
-use itertools::iproduct;
+use rtracer_core::prelude::*;
+use rtracer_core::image::{Image, ColorRGB};
 
-use rtracer::prelude::*;
-use rtracer::{Image, ColorRGB};
-use rtracer::{HitList, Hit};
-use rtracer::Scatter;
+use rtracer_cpu::prelude::*;
 
 const MAX_RAY_DEPTH: u32 = 32;
 const RAYS_FOR_PIXEL: u32 = 32;
-
-fn normal_to_color(normal: &Vec3) -> Vec3 {
-    (Vec3::new(1., 1., 1.) + *normal) * 0.5
-}
-
-fn color(ray: &Ray, scene: &HitList, depth: u32) -> ColorRGB {
-    if let Some(rec) = scene.hit(ray, (1e-5, std::f32::MAX)) {
-        if let Some(scattered) = rec.material.scatter(ray, &rec) {
-            if depth < MAX_RAY_DEPTH {
-                return scattered.attenuation * color(&scattered.ray, scene, depth + 1);
-            }
-        }
-        Vec3::origin()
-    } else {
-        let unit_direction = ray.direction.make_unit();
-        let t = 0.5f32 * (unit_direction.y() + 1f32);
-        (1f32 - t) * Vec3::new(1f32, 1f32, 1f32) + t * Vec3::new(0.5f32, 0.7f32, 1f32)
-    }
-}
-
-fn draw_scene(img: &mut Image, scene: &HitList, camera: &Camera) {
-    let (width, height) = (img.width(), img.height());
-
-    let ns = RAYS_FOR_PIXEL;
-
-    iproduct!((0..height), (0..width))
-        .zip(img.buf_mut().iter_mut())
-        .par_bridge()
-        .for_each(|((y, x), pixel)| {
-            let mut total_color = ColorRGB::origin();
-
-            for _ in 0..ns {
-                let (u, v) = ((x as f32 + rand::random::<f32>()) / width as f32,
-                              (y as f32 + rand::random::<f32>()) / height as f32);
-                let ray = camera.get_ray((u, v));
-
-                total_color += color(&ray, &scene, 0);
-            }
-            total_color /= ns as f32;
-            total_color = total_color.gamma_correction(2f32);
-
-            *pixel = total_color;
-        });
-}
 
 enum Error {
     ArgParse,
@@ -69,8 +21,8 @@ impl From<std::io::Error> for Error {
     }
 }
 
-fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
-    let mut scene = HitList::new();
+fn test_scene_dielectric((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
+    let mut scene = Scene::new();
 
     let z = -1.2;
     let dist = 1.15;
@@ -101,8 +53,8 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (HitList, Camera) {
     (scene, camera)
 }
 
-fn test_scene_triangle((width, height): (u32, u32)) -> (HitList, Camera) {
-    let mut scene = HitList::new();
+fn test_scene_triangle((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
+    let mut scene = Scene::new();
 
     let size = 1.;
 
@@ -114,8 +66,8 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (HitList, Camera) {
     (scene, camera)
 }
 
-fn test_scene_disk((width, height): (u32, u32)) -> (HitList, Camera) {
-    let mut scene = HitList::new();
+fn test_scene_disk((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
+    let mut scene = Scene::new();
 
     scene.add(Object::new_disk(Disk::new(Plane::new(-Vec3::new_z(), Vec3::new_z()), 1.),
                                Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
@@ -137,7 +89,10 @@ fn run() -> Result<(), Error> {
 //    let (scene, camera) = test_scene_triangle((width, height));
 //    let (scene, camera) = test_scene_disk((width, height));
 
-    draw_scene(&mut img, &scene, &camera);
+    let mut renderer = CPURenderer::new(RAYS_FOR_PIXEL, MAX_RAY_DEPTH);
+    renderer.scene = scene;
+
+    renderer.render(&mut img, &camera);
 
     Ok(match args.len() {
         1 => img.write_ppm(&mut std::io::stdout().lock())?,

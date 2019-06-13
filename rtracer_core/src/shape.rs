@@ -1,8 +1,4 @@
-use crate::{Sphere, Triangle, Disk};
-use crate::Plane;
-use crate::Ray;
-use crate::cube::Cube;
-use crate::intersect::Intersect;
+use crate::prelude::*;
 
 pub enum Shape {
     Sphere(Sphere),

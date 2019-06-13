@@ -1,15 +1,23 @@
 use rand::distributions::{UnitSphereSurface, Distribution};
-
-use crate::Vec3;
-use crate::{Scatter, ScatteredRay};
-use crate::{Ray, HitRecord};
 use rand::Rng;
 
-#[derive(Clone, Copy)]
-pub enum Material {
-    Lambertian(Lambertian),
-    Metal(Metal),
-    Dielectric(Dielectric),
+use rtracer_core::prelude::*;
+
+use crate::prelude::*;
+
+pub struct ScatteredRay {
+    pub ray: Ray,
+    pub attenuation: Vec3,
+}
+
+impl ScatteredRay {
+    pub fn new(ray: Ray, attenuation: Vec3) -> ScatteredRay {
+        ScatteredRay { ray, attenuation }
+    }
+}
+
+pub trait Scatter: Send + Sync {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatteredRay>;
 }
 
 impl Scatter for Material {
@@ -22,33 +30,10 @@ impl Scatter for Material {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct Lambertian {
-    pub albedo: Vec3,
-}
-
-impl Lambertian {
-    pub fn new(albedo: Vec3) -> Lambertian {
-        Lambertian { albedo }
-    }
-}
-
 impl Scatter for Lambertian {
     fn scatter(&self, _ray: &Ray, hit: &HitRecord) -> Option<ScatteredRay> {
         let target = hit.normal + random_in_unit_sphere();
         Some(ScatteredRay::new(Ray::new(hit.point, target), self.albedo))
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct Metal {
-    pub albedo: Vec3,
-    pub fuzz: f32,
-}
-
-impl Metal {
-    pub fn new(albedo: Vec3, fuzz: f32) -> Metal {
-        Metal { albedo, fuzz: fuzz.min(1.).max(0.) }
     }
 }
 
@@ -59,18 +44,6 @@ impl Scatter for Metal {
             return Some(ScatteredRay::new(Ray::new(hit.point, reflected + self.fuzz * random_in_unit_sphere()), self.albedo));
         }
         None
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct Dielectric {
-    pub attenuation: Vec3,
-    pub ref_idx: f32,
-}
-
-impl Dielectric {
-    pub fn new(attenuation: Vec3, ref_idx: f32) -> Dielectric {
-        Dielectric { attenuation, ref_idx }
     }
 }
 

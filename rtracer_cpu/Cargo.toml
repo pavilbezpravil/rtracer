@@ -1,11 +1,12 @@
 [package]
-name = "rtracer"
+name = "rtracer_cpu"
 version = "0.1.0"
 authors = ["Pavel <pavilbezpravil@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-rtracer_core = { path = "rtracer_core" }
-rtracer_cpu = { path = "rtracer_cpu" }
-
+rtracer_core = { path = "../rtracer_core" }
 rand = "*"
+rayon = "*"
+itertools = "*"
+approx = "*"

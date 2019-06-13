@@ -12,4 +12,5 @@ pub use crate::{
     object::Object,
     camera::Camera,
     material::{Material, Lambertian, Metal, Dielectric},
+    intersection,
 };

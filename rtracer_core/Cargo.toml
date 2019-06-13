@@ -1,0 +1,10 @@
+[package]
+name = "rtracer_core"
+version = "0.1.0"
+authors = ["Pavel <pavilbezpravil@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = { version = "*", features = ["derive", "rc"] }
+serde_json = "*"
+approx = "*"
