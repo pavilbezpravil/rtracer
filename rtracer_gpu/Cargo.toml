@@ -1,0 +1,13 @@
+[package]
+name = "rtracer_gpu"
+version = "0.1.0"
+authors = ["Pavel <pavilbezpravil@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+#rtracer_core = { path = "../rtracer_core" }
+
+vulkano = "0.11"
+vulkano-shaders = "0.11"
+
+image = "0.21"

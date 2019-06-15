@@ -6,6 +6,7 @@ Cargo.lock
 
 *.ppm
 *.sh
+*.png
 
 /books
 /outputs
