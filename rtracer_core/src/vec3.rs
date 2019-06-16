@@ -50,6 +50,10 @@ impl Vec3 {
         self.0[2]
     }
 
+    pub fn as_array(&self) -> [f32; 3] {
+        self.0
+    }
+
     pub fn length(&self) -> f32 {
         self.squared_length().sqrt()
     }
