@@ -21,15 +21,13 @@ fn print_all_physical_devices(instance: &Arc<Instance>) {
 }
 
 fn physical_device_find_gpu_or_cpu(instance: &Arc<Instance>) -> Option<PhysicalDevice> {
-    let mut physical_iter = PhysicalDevice::enumerate(&instance);
-
-    if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::DiscreteGpu) {
+    if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::DiscreteGpu) {
         Some(p)
-    } else if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::IntegratedGpu) {
+    } else if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::IntegratedGpu) {
         Some(p)
-    } else if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::VirtualGpu) {
+    } else if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::VirtualGpu) {
         Some(p)
-    } else if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::Cpu) {
+    } else if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::Cpu) {
         Some(p)
     } else {
         None
