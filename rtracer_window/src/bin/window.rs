@@ -7,6 +7,8 @@
 // notice may not be copied, modified, or distributed except
 // according to those terms.
 
+#![feature(duration_float)]
+
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
@@ -36,10 +38,50 @@ use rtracer_core::prelude::*;
 
 use rtracer_window::Renderer;
 
-fn main() {
-    // The start of this example is exactly the same as `triangle`. You should read the
-    // `triangle` example if you haven't done so yet.
+use std::time::Instant;
 
+pub struct FrameCounter {
+    last_fps_update: Option<Instant>,
+    total_frame: usize,
+    fps: f32,
+    cur_fps_count: usize,
+}
+
+impl FrameCounter {
+    pub fn new() -> FrameCounter {
+        FrameCounter { last_fps_update: None, total_frame: 0, fps: 0., cur_fps_count: 0 }
+    }
+
+    pub fn next_frame(&mut self) -> Option<f32> {
+        if self.last_fps_update == None {
+            self.last_fps_update = Some(Instant::now());
+        }
+
+        self.total_frame += 1;
+        self.cur_fps_count += 1;
+
+        let elapsed = self.last_fps_update.unwrap().elapsed().as_secs_f32();
+        if elapsed > 1. {
+            self.fps = self.cur_fps_count as f32 / elapsed;
+
+            self.last_fps_update = Some(Instant::now());
+            self.cur_fps_count = 0;
+            Some((self.fps))
+        } else {
+            None
+        }
+    }
+
+    pub fn fps(&self) -> f32 {
+        self.fps
+    }
+
+    pub fn total_frame(&self) -> usize {
+        self.total_frame
+    }
+}
+
+fn main() {
     let extensions = vulkano_win::required_extensions();
     let instance = Instance::new(None, &extensions, None).unwrap();
 
@@ -116,8 +158,9 @@ fn main() {
         ).unwrap()
     );
 
-//    let (width, height) = (1024 / 8, 1024 / 8);
+//    let (width, height) = (1920 / 4, 1080 / 4);
     let (width, height) = (1920, 1080);
+    let (width, height) = ((width / 8) * 8, (height / 8) * 8);
 
     let texture = StorageImage::new(device.clone(),
                           Dimensions::Dim2d { width, height },
@@ -155,6 +198,8 @@ fn main() {
 
     let mut recreate_swapchain = false;
     let mut previous_frame_end = Box::new(sync::now(device.clone())) as Box<GpuFuture>;
+
+    let mut frame_counter = FrameCounter::new();
 
     loop {
         previous_frame_end.cleanup_finished();
@@ -253,6 +298,10 @@ fn main() {
             }
         });
         if done { return; }
+
+        if let Some(fps) = frame_counter.next_frame() {
+            println!("fps: {}", fps);
+        }
     }
 }
 

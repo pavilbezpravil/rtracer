@@ -247,11 +247,11 @@ void main() {
     vec2 norm_coordinates = (gl_GlobalInvocationID.xy + vec2(0.5)) / vec2(imageSize(img));
 
     vec3 col = vec3(0, 0, 0);
-    const int nsamples = 1;
+    const int nsamples = 4;
     for (int s = 0; s < nsamples; s++) {
         // TODO: triming
-//        vec2 uv = norm_coordinates + vec2(drand48(col.xy + s), drand48(col.xy + s + 1)) / (4 * vec2(imageSize(img)));
-        vec2 uv = norm_coordinates;
+        vec2 uv = norm_coordinates + vec2(drand48(col.xy + s), drand48(col.xy + s + 1)) / vec2(imageSize(img));
+//        vec2 uv = norm_coordinates;
 
         Ray r = get_ray(uv.x, uv.y);
         col += color(r);
