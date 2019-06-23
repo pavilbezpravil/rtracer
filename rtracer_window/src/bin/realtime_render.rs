@@ -1,0 +1,129 @@
+use std::sync::Arc;
+
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice, PhysicalDeviceType};
+use vulkano::device::{Device, DeviceExtensions, Queue};
+use vulkano::pipeline::{ComputePipeline, ComputePipelineAbstract};
+use vulkano::format::Format;
+use vulkano::image::{StorageImage, Dimensions};
+use vulkano::command_buffer::{CommandBuffer, AutoCommandBufferBuilder};
+use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
+use vulkano::sync::GpuFuture;
+use vulkano::format::FormatDesc;
+use vulkano::memory::pool::MemoryPool;
+use vulkano::image::traits::ImageViewAccess;
+
+use image::{ImageBuffer, Rgba};
+
+use rtracer_core::prelude::*;
+
+pub mod cs {
+    vulkano_shaders::shader! {
+                ty: "compute",
+                path: "../rtracer_gpu/src/shaders/one_sphere.comp",
+            }
+}
+
+struct Renderer {
+    device: Arc<Device>,
+    queue: Arc<Queue>,
+    compute_pipeline: Arc<dyn ComputePipelineAbstract + Send + Sync>
+}
+
+impl Renderer {
+    pub fn new(device: Arc<Device>, queue: Arc<Queue>) -> Renderer {
+        let compute_pipeline = Arc::new({
+            let shader = cs::Shader::load(device.clone()).unwrap();
+            ComputePipeline::new(device.clone(), &shader.main_entry_point(), &()).unwrap()
+        });
+
+        Renderer { device, queue, compute_pipeline }
+    }
+
+    pub fn render(&self, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>)
+    {
+        let set = Arc::new(PersistentDescriptorSet::start(self.compute_pipeline.clone(), 0)
+            .add_image(image).unwrap()
+            .build().unwrap()
+        );
+
+        let camera_push_constant = cs::ty::Camera {
+            origin: camera.origin.as_array(),
+            upper_left: camera.upper_left.as_array(),
+            horizontal: camera.horizontal.as_array(),
+            vertical: camera.vertical.as_array(),
+            _dummy0: [1, 1, 1, 1],
+            _dummy1: [1, 1, 1, 1],
+            _dummy2: [1, 1, 1, 1],
+        };
+
+        let command_buffer = AutoCommandBufferBuilder::new(self.device.clone(), self.queue.family()).unwrap()
+            .dispatch([1024 / 8, 1024 / 8, 1], self.compute_pipeline.clone(), set.clone(), camera_push_constant).unwrap()
+            .build().unwrap();
+
+        let finished = command_buffer.execute(self.queue.clone()).unwrap();
+        finished.then_signal_fence_and_flush().unwrap()
+            .wait(None).unwrap();
+    }
+}
+
+fn print_all_physical_devices(instance: &Arc<Instance>) {
+    for p in PhysicalDevice::enumerate(&instance) {
+        println!("{}", p.name());
+    }
+}
+
+fn physical_device_find_gpu_or_cpu(instance: &Arc<Instance>) -> Option<PhysicalDevice> {
+    let mut physical_iter = PhysicalDevice::enumerate(&instance);
+
+    if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::DiscreteGpu) {
+        Some(p)
+    } else if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::IntegratedGpu) {
+        Some(p)
+    } else if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::VirtualGpu) {
+        Some(p)
+    } else if let Some(p) = physical_iter.find(|p| p.ty() == PhysicalDeviceType::Cpu) {
+        Some(p)
+    } else {
+        None
+    }
+}
+
+fn main() {
+    let instance = Instance::new(None, &InstanceExtensions::none(), None).unwrap();
+    print_all_physical_devices(&instance);
+    let physical = physical_device_find_gpu_or_cpu(&instance).unwrap();
+    let queue_family = physical.queue_families().find(|&q| q.supports_compute()).unwrap();
+
+    let (device, mut queues) = Device::new(physical, physical.supported_features(),
+                                           &DeviceExtensions::none(), [(queue_family, 0.5)].iter().cloned()).unwrap();
+
+    let queue = queues.next().unwrap();
+
+    let (width, height) = (1024, 1024);
+    let buf = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(),
+                                             (0..width * height * 4).map(|_| 0u8)).unwrap();
+
+    let image = StorageImage::new(device.clone(),
+                                  Dimensions::Dim2d { width, height },
+                                  Format::R8G8B8A8Unorm, Some(queue.family())).unwrap();
+
+    let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+
+    let renderer = Renderer::new(device.clone(), queue.clone());
+
+    renderer.render(&camera, image.clone());
+
+    let command_buffer = AutoCommandBufferBuilder::new(device.clone(), queue.family()).unwrap()
+        .copy_image_to_buffer(image.clone(), buf.clone()).unwrap()
+        .build().unwrap();
+
+    let finished = command_buffer.execute(queue.clone()).unwrap();
+    finished.then_signal_fence_and_flush().unwrap()
+        .wait(None).unwrap();
+
+    let buffer_content = buf.read().unwrap();
+    let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &buffer_content[..]).unwrap();
+
+    image.save("image.png").unwrap();
+}
