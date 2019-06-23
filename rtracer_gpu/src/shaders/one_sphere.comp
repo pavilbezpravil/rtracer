@@ -109,6 +109,7 @@ Material lambert    = Material(vec3(0.8, 0.8, 0.0), 0.0, 0.0, mat_lambert);
 Sphere world[] = Sphere[](
     Sphere(vec3(1, 0, -1), 0.5, gray_metal),
     Sphere(vec3(-1, 0, -1), 0.5, gold_metal),
+    Sphere(vec3(0, 0, -1.5), 0.5, gray_metal),
 //    Sphere(vec3(0, 0, 1), 0.5, dielectric),
 //    Sphere(vec3(0, 0, 1), -0.45, dielectric),
     Sphere(vec3(0, -100.5, -1), 100, lambert)
@@ -259,7 +260,7 @@ void main() {
     vec2 norm_coordinates = (gl_GlobalInvocationID.xy + vec2(0.5)) / vec2(imageSize(img));
 
     vec3 col = vec3(0, 0, 0);
-    const int nsamples = 16;
+    const int nsamples = 1;
     for (int s = 0; s < nsamples; s++) {
         vec2 uv = norm_coordinates + vec2(drand48(col.xy + s), drand48(col.xy + s + 1)) / vec2(imageSize(img));
 

@@ -10,7 +10,7 @@ pub use crate::{
     shape::Shape,
     intersect::Intersect,
     object::Object,
-    camera::Camera,
+    camera::{Camera, RaycastCamera},
     material::{Material, Lambertian, Metal, Dielectric},
     intersection,
 };

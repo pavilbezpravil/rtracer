@@ -74,6 +74,16 @@ impl Vec3 {
         )
     }
 
+    pub fn try_make_unit(&self) -> Option<Vec3> {
+        if self.length() < 2. * std::f32::EPSILON {
+            None
+        } else {
+            let mut unit = *self;
+            unit /= self.length();
+            Some(unit)
+        }
+    }
+
     pub fn make_unit(&self) -> Vec3 {
         debug_assert!(self.length() > 2. * std::f32::EPSILON);
         let mut unit = *self;

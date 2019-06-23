@@ -13,7 +13,7 @@ use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::device::{Device, DeviceExtensions};
 use vulkano::format::Format;
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, Subpass, RenderPassAbstract};
-use vulkano::image::{SwapchainImage, ImmutableImage, Dimensions};
+use vulkano::image::{SwapchainImage, ImmutableImage, StorageImage, Dimensions};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::pipeline::GraphicsPipeline;
 use vulkano::pipeline::viewport::Viewport;
@@ -26,11 +26,15 @@ use vulkano::sync;
 
 use vulkano_win::VkSurfaceBuild;
 
-use winit::{EventsLoop, Window, WindowBuilder, Event, WindowEvent};
+use winit::{EventsLoop, Window, WindowBuilder, Event, WindowEvent, ElementState, VirtualKeyCode};
 
 use image::ImageFormat;
 
 use std::sync::Arc;
+
+use rtracer_core::prelude::*;
+
+use rtracer_window::Renderer;
 
 fn main() {
     // The start of this example is exactly the same as `triangle`. You should read the
@@ -47,7 +51,7 @@ fn main() {
     let window = surface.window();
 
     let queue_family = physical.queue_families().find(|&q|
-        q.supports_graphics() && surface.is_supported(q).unwrap_or(false)
+        q.supports_graphics() && q.supports_compute() && surface.is_supported(q).unwrap_or(false)
     ).unwrap();
 
     let device_ext = DeviceExtensions { khr_swapchain: true, .. DeviceExtensions::none() };
@@ -112,18 +116,16 @@ fn main() {
         ).unwrap()
     );
 
-    let (texture, tex_future) = {
-        let image = image::load_from_memory_with_format(include_bytes!("../../../rtracer_gpu/image.png"),
-                                                        ImageFormat::PNG).unwrap().to_rgba();
-        let image_data = image.into_raw().clone();
+//    let (width, height) = (1024 / 8, 1024 / 8);
+    let (width, height) = (1920, 1080);
 
-        ImmutableImage::from_iter(
-            image_data.iter().cloned(),
-            Dimensions::Dim2d { width: 1024, height: 1024 },
-            Format::R8G8B8A8Srgb,
-            queue.clone()
-        ).unwrap()
-    };
+    let texture = StorageImage::new(device.clone(),
+                          Dimensions::Dim2d { width, height },
+                          Format::R8G8B8A8Unorm, Some(queue.family())).unwrap();
+
+//    let sampler = Sampler::new(device.clone(), Filter::Linear, Filter::Linear,
+//                               MipmapMode::Nearest, SamplerAddressMode::Repeat, SamplerAddressMode::Repeat,
+//                               SamplerAddressMode::Repeat, 0.0, 1.0, 0.0, 0.0).unwrap();
 
     let sampler = Sampler::new(device.clone(), Filter::Linear, Filter::Linear,
                                MipmapMode::Nearest, SamplerAddressMode::Repeat, SamplerAddressMode::Repeat,
@@ -145,11 +147,14 @@ fn main() {
         .build().unwrap()
     );
 
+    let mut camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+    let renderer = Renderer::new(device.clone(), queue.clone());
+
     let mut dynamic_state = DynamicState { line_width: None, viewports: None, scissors: None };
     let mut framebuffers = window_size_dependent_setup(&images, render_pass.clone(), &mut dynamic_state);
 
     let mut recreate_swapchain = false;
-    let mut previous_frame_end = Box::new(tex_future) as Box<GpuFuture>;
+    let mut previous_frame_end = Box::new(sync::now(device.clone())) as Box<GpuFuture>;
 
     loop {
         previous_frame_end.cleanup_finished();
@@ -181,6 +186,8 @@ fn main() {
             }
             Err(err) => panic!("{:?}", err)
         };
+
+        previous_frame_end = renderer.render(&camera, texture.clone(), previous_frame_end);
 
         let clear_values = vec!([0.0, 0.0, 1.0, 1.0].into());
         let cb = AutoCommandBufferBuilder::primary_one_time_submit(device.clone(), queue.family())
@@ -214,6 +221,34 @@ fn main() {
             match ev {
                 Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => done = true,
                 Event::WindowEvent { event: WindowEvent::Resized(_), .. } => recreate_swapchain = true,
+//                Event::WindowEvent { event: WindowEvent::CursorMoved { position, .. }, .. } => println!("{:?}", position),
+                Event::WindowEvent { event: WindowEvent::KeyboardInput { input, .. }, .. } => {
+                    if input.state == ElementState::Pressed {
+                        if let Some(key) = input.virtual_keycode {
+                            let mut dir = Vec3::origin();
+                            match key {
+                                VirtualKeyCode::W => {
+                                    dir += camera.forward();
+                                },
+                                VirtualKeyCode::S => {
+                                    dir += camera.backward();
+                                },
+                                VirtualKeyCode::A => {
+                                    dir += camera.left();
+                                },
+                                VirtualKeyCode::D => {
+                                    dir += camera.right();
+                                },
+                                _ => {},
+                            };
+
+                            if let Some(dir) = dir.try_make_unit() {
+                                let dt = 1. / 60.;
+                                camera.translate(&(dir * dt));
+                            }
+                        }
+                    }
+                },
                 _ => ()
             }
         });

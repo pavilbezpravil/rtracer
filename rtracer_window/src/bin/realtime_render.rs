@@ -17,55 +17,7 @@ use image::{ImageBuffer, Rgba};
 
 use rtracer_core::prelude::*;
 
-pub mod cs {
-    vulkano_shaders::shader! {
-                ty: "compute",
-                path: "../rtracer_gpu/src/shaders/one_sphere.comp",
-            }
-}
-
-struct Renderer {
-    device: Arc<Device>,
-    queue: Arc<Queue>,
-    compute_pipeline: Arc<dyn ComputePipelineAbstract + Send + Sync>
-}
-
-impl Renderer {
-    pub fn new(device: Arc<Device>, queue: Arc<Queue>) -> Renderer {
-        let compute_pipeline = Arc::new({
-            let shader = cs::Shader::load(device.clone()).unwrap();
-            ComputePipeline::new(device.clone(), &shader.main_entry_point(), &()).unwrap()
-        });
-
-        Renderer { device, queue, compute_pipeline }
-    }
-
-    pub fn render(&self, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>)
-    {
-        let set = Arc::new(PersistentDescriptorSet::start(self.compute_pipeline.clone(), 0)
-            .add_image(image).unwrap()
-            .build().unwrap()
-        );
-
-        let camera_push_constant = cs::ty::Camera {
-            origin: camera.origin.as_array(),
-            upper_left: camera.upper_left.as_array(),
-            horizontal: camera.horizontal.as_array(),
-            vertical: camera.vertical.as_array(),
-            _dummy0: [1, 1, 1, 1],
-            _dummy1: [1, 1, 1, 1],
-            _dummy2: [1, 1, 1, 1],
-        };
-
-        let command_buffer = AutoCommandBufferBuilder::new(self.device.clone(), self.queue.family()).unwrap()
-            .dispatch([1024 / 8, 1024 / 8, 1], self.compute_pipeline.clone(), set.clone(), camera_push_constant).unwrap()
-            .build().unwrap();
-
-        let finished = command_buffer.execute(self.queue.clone()).unwrap();
-        finished.then_signal_fence_and_flush().unwrap()
-            .wait(None).unwrap();
-    }
-}
+use rtracer_window::Renderer;
 
 fn print_all_physical_devices(instance: &Arc<Instance>) {
     for p in PhysicalDevice::enumerate(&instance) {
