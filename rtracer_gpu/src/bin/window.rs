@@ -1,14 +1,3 @@
-// Copyright (c) 2016 The vulkano developers
-// Licensed under the Apache License, Version 2.0
-// <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT
-// license <LICENSE-MIT or http://opensource.org/licenses/MIT>,
-// at your option. All files in the project carrying such
-// notice may not be copied, modified, or distributed except
-// according to those terms.
-
-#![feature(duration_float)]
-
 use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
@@ -36,50 +25,8 @@ use std::sync::Arc;
 
 use rtracer_core::prelude::*;
 
-use rtracer_window::Renderer;
-
-use std::time::Instant;
-
-pub struct FrameCounter {
-    last_fps_update: Option<Instant>,
-    total_frame: usize,
-    fps: f32,
-    cur_fps_count: usize,
-}
-
-impl FrameCounter {
-    pub fn new() -> FrameCounter {
-        FrameCounter { last_fps_update: None, total_frame: 0, fps: 0., cur_fps_count: 0 }
-    }
-
-    pub fn next_frame(&mut self) -> Option<f32> {
-        if self.last_fps_update == None {
-            self.last_fps_update = Some(Instant::now());
-        }
-
-        self.total_frame += 1;
-        self.cur_fps_count += 1;
-
-        let elapsed = self.last_fps_update.unwrap().elapsed().as_secs_f32();
-        if elapsed > 1. {
-            self.fps = self.cur_fps_count as f32 / elapsed;
-
-            self.last_fps_update = Some(Instant::now());
-            self.cur_fps_count = 0;
-            Some((self.fps))
-        } else {
-            None
-        }
-    }
-
-    pub fn fps(&self) -> f32 {
-        self.fps
-    }
-
-    pub fn total_frame(&self) -> usize {
-        self.total_frame
-    }
-}
+use rtracer_gpu::renderer::Renderer;
+use rtracer_gpu::frame_counter::FrameCounter;
 
 fn main() {
     let extensions = vulkano_win::required_extensions();

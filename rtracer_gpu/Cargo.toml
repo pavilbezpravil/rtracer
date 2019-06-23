@@ -9,5 +9,8 @@ rtracer_core = { path = "../rtracer_core" }
 
 vulkano = "0.11"
 vulkano-shaders = "0.11"
+vulkano-win = "0.11"
+winit = "0.18"
 
 image = "0.21"
+rand = "*"

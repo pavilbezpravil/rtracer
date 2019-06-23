@@ -24,7 +24,7 @@ extern crate rand;
 pub mod cs {
     vulkano_shaders::shader! {
                 ty: "compute",
-                path: "../rtracer_gpu/src/shaders/one_sphere.comp",
+                path: "src/shaders/one_sphere.comp",
     }
 }
 
@@ -82,13 +82,5 @@ impl Renderer {
             .then_signal_fence_and_flush().unwrap();
 
         Box::new(future) as Box<_>
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 }
