@@ -16,6 +16,10 @@ use vulkano::image::traits::ImageViewAccess;
 use image::{ImageBuffer, Rgba};
 
 use rtracer_core::prelude::*;
+use std::time::Duration;
+use rand::Rng;
+
+extern crate rand;
 
 pub mod cs {
     vulkano_shaders::shader! {
@@ -54,6 +58,7 @@ impl Renderer {
             upper_left: raycast_camera.upper_left.as_array(),
             horizontal: raycast_camera.horizontal.as_array(),
             vertical: raycast_camera.vertical.as_array(),
+            seed: rand::thread_rng().gen(),
             _dummy0: [1, 1, 1, 1],
             _dummy1: [1, 1, 1, 1],
             _dummy2: [1, 1, 1, 1],
