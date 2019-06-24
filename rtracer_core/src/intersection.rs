@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use std::mem::swap;
 
 pub fn ray_sphere_intersection(ray: &Ray, sphere: &Sphere) -> Option<f32> {
     let oc = ray.origin - sphere.center;
@@ -42,36 +43,56 @@ pub fn ray_box_intersection(ray: &Ray, aabb: &Aabb) -> Option<(f32, f32)> {
     let box_min = aabb.min;
     let box_max = aabb.max;
 
-    let ray_pos = ray.origin;
+//    let ray_pos = ray.origin;
+//
+//    let inv_dir = Vec3::new(1. / ray.direction.x(), 1. / ray.direction.y(), 1. / ray.direction.z());
+//
+//    let mut tmin;
+//    let mut tmax;
+//
+//    let lo = inv_dir.x() * (box_min.x() - ray_pos.x());
+//    let hi = inv_dir.x() * (box_max.x() - ray_pos.x());
+//
+//    tmin = lo.min(hi);
+//    tmax = lo.max(hi);
+//
+//    let lo1 = inv_dir.y() * (box_min.y() - ray_pos.y());
+//    let hi1 = inv_dir.y() * (box_max.y() - ray_pos.y());
+//
+//    tmin = tmin.max(lo1.min(hi1));
+//    tmax = tmax.min(lo1.max(hi1));
+//
+//    let lo2 = inv_dir.z() * (box_min.z() - ray_pos.z());
+//    let hi2 = inv_dir.z() * (box_max.z() - ray_pos.z());
+//
+//    tmin = tmin.max(lo2.min(hi2));
+//    tmax = tmax.min(lo2.max(hi2));
+//
+//    if (tmin <= tmax) && (tmax > 0.) {
+//        Some((tmin, tmax))
+//    } else {
+//        None
+//    }
 
-    let inv_dir = Vec3::new(1. / ray.direction.x(), 1. / ray.direction.y(), 1. / ray.direction.z());
+    let (mut tmin, mut tmax) = (0., std::f32::MAX);
 
-    let mut tmin;
-    let mut tmax;
+    for a in 0..3 {
+        let inv_d = 1. / ray.direction[a];
+        let mut t0 = (box_min[a] - ray.origin[a]) * inv_d;
+        let mut t1 = (box_max[a] - ray.origin[a]) * inv_d;
 
-    let lo = inv_dir.x() * (box_min.x() - ray_pos.x());
-    let hi = inv_dir.x() * (box_max.x() - ray_pos.x());
+        if inv_d < 0. {
+            swap(&mut t0, &mut t1);
+        }
 
-    tmin = lo.min(hi);
-    tmax = lo.max(hi);
-
-    let lo1 = inv_dir.y() * (box_min.y() - ray_pos.y());
-    let hi1 = inv_dir.y() * (box_max.y() - ray_pos.y());
-
-    tmin = tmin.max(lo1.min(hi1));
-    tmax = tmax.min(lo1.max(hi1));
-
-    let lo2 = inv_dir.z() * (box_min.z() - ray_pos.z());
-    let hi2 = inv_dir.z() * (box_max.z() - ray_pos.z());
-
-    tmin = tmin.max(lo2.min(hi2));
-    tmax = tmax.min(lo2.max(hi2));
-
-    if (tmin <= tmax) && (tmax > 0.) {
-        Some((tmin, tmax))
-    } else {
-        None
+        tmin = if t0 > tmin { t0 } else { tmin };
+        tmax = if t1 < tmax { t1 } else { tmax };
+        if tmax <= tmin {
+            return None
+        }
     }
+
+    Some((tmin, tmax))
 }
 
 pub fn ray_triangle_intersection(ray: &Ray, triangle: &Triangle) -> Option<f32> {

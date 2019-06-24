@@ -10,7 +10,7 @@ pub struct Cube {
 
 impl Cube {
     pub fn new(center: Vec3, size: Vec3) -> Cube {
-        Cube { aabb: Aabb::new_from_center_size(center, size) }
+        Cube { aabb: Aabb::from_center_size(center, size) }
     }
 
     pub fn new_from_aabb(aabb: Aabb) -> Cube {
@@ -46,5 +46,9 @@ impl Intersect for Cube {
         }
 
         None
+    }
+
+    fn aabb(&self) -> Aabb {
+        self.aabb
     }
 }

@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_sphere_intersection;
 
@@ -27,5 +28,9 @@ impl Intersect for Sphere {
         }
 
         None
+    }
+
+    fn aabb(&self) -> Aabb {
+        Aabb::from_center_size(self.center, Vec3::from_value(self.radius * 2.))
     }
 }

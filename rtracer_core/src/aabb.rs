@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 
+#[derive(Copy, Clone)]
 pub struct Aabb {
     pub min: Vec3,
     pub max: Vec3,
@@ -10,7 +11,7 @@ impl Aabb {
         Aabb { min, max }
     }
 
-    pub fn new_from_center_size(center: Vec3, size: Vec3) -> Aabb {
+    pub fn from_center_size(center: Vec3, size: Vec3) -> Aabb {
         let hsize = size / 2.;
         let min = center - hsize;
         let max = center + hsize;
@@ -27,6 +28,19 @@ impl Aabb {
 
     pub fn normal_at(&self, point: &Vec3) -> Vec3 {
         aabb_noraml_at(self, point)
+    }
+
+    pub fn union(a: &Aabb, b: &Aabb) -> Aabb {
+        Aabb {
+            min: Vec3::new(
+            a.min.x().min(b.min.x()),
+            a.min.y().min(b.min.y()),
+            a.min.z().min(b.min.z())),
+            max: Vec3::new(
+                a.max.x().max(b.max.x()),
+                a.max.y().max(b.max.y()),
+                a.max.z().max(b.max.z()))
+        }
     }
 }
 
@@ -49,7 +63,6 @@ fn aabb_noraml_at(aabb: &Aabb, point: &Vec3) -> Vec3 {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -58,7 +71,7 @@ mod tests {
     fn test_normal_at_simple() {
         let pos = Vec3::new(3., 2., -7.);
 
-        let aabb = Aabb::new_from_center_size( pos, 2. * Vec3::unit());
+        let aabb = Aabb::from_center_size(pos, 2. * Vec3::unit());
 
         assert_eq!(aabb.normal_at(&(pos + Vec3::new_x())), Vec3::new_x());
         assert_eq!(aabb.normal_at(&(pos -Vec3::new_x())), -Vec3::new_x());
@@ -72,7 +85,7 @@ mod tests {
 
     #[test]
     fn test_normal_at_hard() {
-        let aabb = Aabb::new_from_center_size(Vec3::origin(), 2. * Vec3::unit());
+        let aabb = Aabb::from_center_size(Vec3::origin(), 2. * Vec3::unit());
 
         assert_eq!(aabb.normal_at(&Vec3::new(1., 0.4, -0.2)), Vec3::new_x());
         assert_eq!(aabb.normal_at(&Vec3::new(-1., 0.97, 0.89)), -Vec3::new_x());

@@ -1,5 +1,6 @@
 use crate::vec3::Vec3;
 use crate::ray::Ray;
+use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_plane_intersection;
 
@@ -25,5 +26,9 @@ impl Intersect for Plane {
         }
 
         None
+    }
+
+    fn aabb(&self) -> Aabb {
+        unimplemented!()
     }
 }

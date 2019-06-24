@@ -18,4 +18,14 @@ impl Intersect for Shape {
             Shape::Disk(s) => s.intersect(ray, t_min_max),
         }
     }
+
+    fn aabb(&self) -> Aabb {
+        match self {
+            Shape::Plane(s) => s.aabb(),
+            Shape::Sphere(s) => s.aabb(),
+            Shape::Cube(s) => s.aabb(),
+            Shape::Triangle(s) => s.aabb(),
+            Shape::Disk(s) => s.aabb(),
+        }
+    }
 }

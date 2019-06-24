@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::ops::{Neg, Index};
 use std::ops::{Add, AddAssign};
 use std::ops::{Sub, SubAssign};
 use std::ops::{Mul, MulAssign};
@@ -16,6 +16,10 @@ impl Vec3 {
 
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
         Vec3([x, y, z])
+    }
+
+    pub fn from_value(value: f32) -> Vec3 {
+        Vec3::new(value, value, value)
     }
 
     pub fn new_x() -> Vec3 {
@@ -89,6 +93,14 @@ impl Vec3 {
         let mut unit = *self;
         unit /= self.length();
         unit
+    }
+}
+
+impl Index<usize> for Vec3 {
+    type Output = f32;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
     }
 }
 

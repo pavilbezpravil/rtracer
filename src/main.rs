@@ -9,6 +9,8 @@ use rtracer_cpu::prelude::*;
 
 use rtracer_cpu::ext_image::{ImageBuffer, Rgba};
 
+use rand::Rng;
+
 const MAX_RAY_DEPTH: u32 = 32;
 const RAYS_FOR_PIXEL: u32 = 32;
 
@@ -79,15 +81,42 @@ fn test_scene_disk((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
     (scene, camera)
 }
 
+fn test_scene_with_random_spheres((width, height): (u32, u32), n: usize) -> (Scene<Object>, Camera) {
+    let mut scene = Scene::new();
+
+    let size = 25f32;
+
+    {
+        let radius = size * 25.;
+        scene.add(Object::new_sphere(Sphere::new(Vec3::new(size / 2., -radius, -size / 2.), radius),
+                                     Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
+    }
+
+
+    for i in 0..n {
+        let radius = 1. + rand::thread_rng().gen::<f32>();
+        let center = Vec3::new(rand::thread_rng().gen::<f32>() * size, radius, -rand::thread_rng().gen::<f32>() * size);
+        let material = Material::Lambertian(Lambertian::new(Vec3::new(rand::thread_rng().gen(), rand::thread_rng().gen(), rand::thread_rng().gen())));
+
+        scene.add(Object::new_sphere(Sphere::new(center, radius),
+                                   material));
+    }
+
+    let camera = Camera::new(Vec3::new(-1., 10., 1.), Vec3::new(size / 2., 0., -size / 2.), Vec3::new_y(), 90., width as f32 / height as f32);
+
+    (scene, camera)
+}
+
 fn run() {
     let args: Vec<String> = std::env::args().collect();
 
 //    let (width, height) = (1920, 1080);
-//    let (width, height) = (640, 480);
-    let (width, height) = (200, 100);
+    let (width, height) = (640, 480);
+//    let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
-    let (scene, camera) = test_scene_dielectric((width, height));
+    let (scene, camera) = test_scene_with_random_spheres((width, height), 50);
+//    let (scene, camera) = test_scene_dielectric((width, height));
 //    let (scene, camera) = test_scene_triangle((width, height));
 //    let (scene, camera) = test_scene_disk((width, height));
 
@@ -96,7 +125,7 @@ fn run() {
 
     renderer.render(&mut img, &camera);
 
-    img.write_ppm(&mut std::fs::File::create("image.ppm").unwrap());
+    img.write_ppm(&mut std::fs::File::create("outputs/image.ppm").unwrap());
 
 //    let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &img.iter()).unwrap();
 //    image.save("image.png").unwrap();

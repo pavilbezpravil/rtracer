@@ -1,5 +1,6 @@
 use crate::plane::Plane;
 use crate::ray:: Ray;
+use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_disk_intersection;
 
@@ -23,5 +24,9 @@ impl Intersect for Disk {
         }
 
         None
+    }
+
+    fn aabb(&self) -> Aabb {
+        unimplemented!()
     }
 }
