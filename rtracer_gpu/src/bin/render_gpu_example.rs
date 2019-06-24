@@ -2,16 +2,11 @@ use std::sync::Arc;
 
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice, PhysicalDeviceType};
-use vulkano::device::{Device, DeviceExtensions, Queue};
-use vulkano::pipeline::{ComputePipeline, ComputePipelineAbstract};
+use vulkano::device::{Device, DeviceExtensions};
 use vulkano::format::Format;
 use vulkano::image::{StorageImage, Dimensions};
 use vulkano::command_buffer::{CommandBuffer, AutoCommandBufferBuilder};
-use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::sync::GpuFuture;
-use vulkano::format::FormatDesc;
-use vulkano::memory::pool::MemoryPool;
-use vulkano::image::traits::ImageViewAccess;
 
 use image::{ImageBuffer, Rgba};
 
@@ -26,8 +21,6 @@ fn print_all_physical_devices(instance: &Arc<Instance>) {
 }
 
 fn physical_device_find_gpu_or_cpu(instance: &Arc<Instance>) -> Option<PhysicalDevice> {
-//    let mut physical_iter = PhysicalDevice::enumerate(&instance);
-
     if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::DiscreteGpu) {
         Some(p)
     } else if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::IntegratedGpu) {

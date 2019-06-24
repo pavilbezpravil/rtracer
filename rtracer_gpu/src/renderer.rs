@@ -1,22 +1,13 @@
 use std::sync::Arc;
 
-use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
-use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice, PhysicalDeviceType};
-use vulkano::device::{Device, DeviceExtensions, Queue};
+use vulkano::device::{Device, Queue};
 use vulkano::pipeline::{ComputePipeline, ComputePipelineAbstract};
-use vulkano::format::Format;
-use vulkano::image::{StorageImage, Dimensions};
-use vulkano::command_buffer::{CommandBuffer, AutoCommandBufferBuilder};
+use vulkano::command_buffer::AutoCommandBufferBuilder;
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::sync::GpuFuture;
-use vulkano::format::FormatDesc;
-use vulkano::memory::pool::MemoryPool;
 use vulkano::image::traits::ImageViewAccess;
 
-use image::{ImageBuffer, Rgba};
-
 use rtracer_core::prelude::*;
-use std::time::Duration;
 use rand::Rng;
 
 extern crate rand;

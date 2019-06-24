@@ -4,12 +4,11 @@ use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::device::{Device, DeviceExtensions, Queue};
 use vulkano::format::Format;
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, Subpass, RenderPassAbstract};
-use vulkano::image::{SwapchainImage, ImmutableImage, StorageImage, Dimensions};
+use vulkano::image::{SwapchainImage, StorageImage, Dimensions};
 use vulkano::image::traits::ImageViewAccess;
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::pipeline::GraphicsPipeline;
 use vulkano::pipeline::viewport::Viewport;
-use vulkano::pipeline::vertex::TwoBuffersDefinition;
 use vulkano::sampler::{Sampler, SamplerAddressMode, Filter, MipmapMode};
 use vulkano::swapchain::{AcquireError, PresentMode, SurfaceTransform, Swapchain, SwapchainCreationError, Surface};
 use vulkano::swapchain;
@@ -18,13 +17,9 @@ use vulkano::sync;
 
 use vulkano_win::VkSurfaceBuild;
 
-use winit::{EventsLoop, Window, WindowBuilder, Event, WindowEvent, ElementState, VirtualKeyCode};
-
-use image::ImageFormat;
+use winit::{EventsLoop, Window, WindowBuilder, Event, WindowEvent};
 
 use std::sync::Arc;
-
-use rtracer_core::prelude::*;
 
 pub struct Testbed {
     pub instance: Arc<Instance>,
@@ -42,9 +37,8 @@ impl Testbed {
         let physical = PhysicalDevice::enumerate(&instance).next().unwrap();
         println!("Using device: {} (type: {:?})", physical.name(), physical.ty());
 
-        let mut events_loop = EventsLoop::new();
+        let events_loop = EventsLoop::new();
         let surface = WindowBuilder::new().build_vk_surface(&events_loop, instance.clone()).unwrap();
-        let window = surface.window();
 
         let queue_family = physical.queue_families().find(|&q|
             q.supports_graphics() && q.supports_compute() && surface.is_supported(q).unwrap_or(false)
