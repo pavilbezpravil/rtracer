@@ -39,10 +39,10 @@ pub fn ray_plane_intersection(ray: &Ray, plane: &Plane) -> Option<f32> {
     }
 }
 
-pub fn ray_box_intersection(ray: &Ray, aabb: &Aabb) -> Option<(f32, f32)> {
-    let box_min = aabb.min;
-    let box_max = aabb.max;
-
+pub fn ray_aabb_intersection(ray: &Ray, aabb: &Aabb) -> Option<(f32, f32)> {
+//    let box_min = aabb.min;
+//    let box_max = aabb.max;
+//
 //    let ray_pos = ray.origin;
 //
 //    let inv_dir = Vec3::new(1. / ray.direction.x(), 1. / ray.direction.y(), 1. / ray.direction.z());
@@ -73,6 +73,9 @@ pub fn ray_box_intersection(ray: &Ray, aabb: &Aabb) -> Option<(f32, f32)> {
 //    } else {
 //        None
 //    }
+
+    let box_min = aabb.min;
+    let box_max = aabb.max;
 
     let (mut tmin, mut tmax) = (0., std::f32::MAX);
 

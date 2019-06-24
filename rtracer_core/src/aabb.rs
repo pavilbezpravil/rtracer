@@ -1,4 +1,7 @@
 use crate::vec3::Vec3;
+use crate::ray::Ray;
+use crate::intersect::Intersect;
+use crate::intersection::ray_aabb_intersection;
 
 #[derive(Copy, Clone)]
 pub struct Aabb {
@@ -70,6 +73,29 @@ fn aabb_noraml_at(aabb: &Aabb, point: &Vec3) -> Vec3 {
         d.y().signum() * Vec3::new_y()
     } else {
         d.z().signum() * Vec3::new_z()
+    }
+}
+
+impl Intersect for Aabb {
+    fn intersect(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<f32> {
+        if let Some((it_t_min, it_t_max)) = ray_aabb_intersection(ray, &self) {
+            let t =
+                if it_t_min > 0. {
+                    it_t_min
+                } else {
+                    it_t_max
+                };
+
+            if t_min < t && t < t_max {
+                return Some(t);
+            }
+        }
+
+        None
+    }
+
+    fn aabb(&self) -> Aabb {
+        *self
     }
 }
 

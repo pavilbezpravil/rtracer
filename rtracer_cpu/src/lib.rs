@@ -11,3 +11,4 @@ mod hit;
 mod hitable_list;
 mod scatter;
 mod renderer_cpu;
+mod bvh;

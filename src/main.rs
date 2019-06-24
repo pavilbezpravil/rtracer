@@ -84,7 +84,7 @@ fn test_scene_disk((width, height): (u32, u32)) -> (HitableList<Object>, Camera)
 fn test_scene_with_random_spheres((width, height): (u32, u32), n: usize) -> (HitableList<Object>, Camera) {
     let mut scene = HitableList::new();
 
-    let size = 25f32;
+    let size = 50f32;
 
     {
         let radius = size * 25.;
@@ -115,7 +115,7 @@ fn run() {
     let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
-    let (scene, camera) = test_scene_with_random_spheres((width, height), 50);
+    let (scene, camera) = test_scene_with_random_spheres((width, height), 100);
 //    let (scene, camera) = test_scene_dielectric((width, height));
 //    let (scene, camera) = test_scene_triangle((width, height));
 //    let (scene, camera) = test_scene_disk((width, height));

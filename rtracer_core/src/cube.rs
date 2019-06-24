@@ -2,7 +2,6 @@ use crate::aabb::Aabb;
 use crate::vec3::Vec3;
 use crate::intersect::Intersect;
 use crate::ray::Ray;
-use crate::intersection::ray_box_intersection;
 
 pub struct Cube {
     aabb: Aabb,
@@ -32,20 +31,7 @@ impl Cube {
 
 impl Intersect for Cube {
     fn intersect(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<f32> {
-        if let Some((it_t_min, it_t_max)) = ray_box_intersection(ray, &self.aabb) {
-            let t =
-                if it_t_min > 0. {
-                    it_t_min
-                } else {
-                    it_t_max
-                };
-
-            if t_min < t && t < t_max {
-                return Some(t);
-            }
-        }
-
-        None
+        self.aabb.intersect(ray, (t_min, t_max))
     }
 
     fn aabb(&self) -> Aabb {
