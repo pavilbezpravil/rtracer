@@ -2,6 +2,7 @@
 
 pub mod renderer;
 pub mod frame_counter;
+pub mod testbed;
 
 #[cfg(test)]
 mod tests {

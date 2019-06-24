@@ -2,17 +2,22 @@ use std::sync::Arc;
 
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::instance::{Instance, InstanceExtensions, PhysicalDevice, PhysicalDeviceType};
-use vulkano::device::{Device, DeviceExtensions};
-use vulkano::pipeline::ComputePipeline;
+use vulkano::device::{Device, DeviceExtensions, Queue};
+use vulkano::pipeline::{ComputePipeline, ComputePipelineAbstract};
 use vulkano::format::Format;
 use vulkano::image::{StorageImage, Dimensions};
 use vulkano::command_buffer::{CommandBuffer, AutoCommandBufferBuilder};
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::sync::GpuFuture;
+use vulkano::format::FormatDesc;
+use vulkano::memory::pool::MemoryPool;
+use vulkano::image::traits::ImageViewAccess;
 
 use image::{ImageBuffer, Rgba};
 
 use rtracer_core::prelude::*;
+
+use rtracer_gpu::renderer::Renderer;
 
 fn print_all_physical_devices(instance: &Arc<Instance>) {
     for p in PhysicalDevice::enumerate(&instance) {
@@ -21,6 +26,8 @@ fn print_all_physical_devices(instance: &Arc<Instance>) {
 }
 
 fn physical_device_find_gpu_or_cpu(instance: &Arc<Instance>) -> Option<PhysicalDevice> {
+//    let mut physical_iter = PhysicalDevice::enumerate(&instance);
+
     if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::DiscreteGpu) {
         Some(p)
     } else if let Some(p) = PhysicalDevice::enumerate(&instance).find(|p| p.ty() == PhysicalDeviceType::IntegratedGpu) {
@@ -45,18 +52,6 @@ fn main() {
 
     let queue = queues.next().unwrap();
 
-    mod cs {
-        vulkano_shaders::shader! {
-                ty: "compute",
-                path: "src/shaders/one_sphere.comp",
-            }
-    }
-
-    let compute_pipeline = Arc::new({
-        let shader = cs::Shader::load(device.clone()).unwrap();
-        ComputePipeline::new(device.clone(), &shader.main_entry_point(), &()).unwrap()
-    });
-
     let (width, height) = (1024, 1024);
     let buf = CpuAccessibleBuffer::from_iter(device.clone(), BufferUsage::all(),
                                              (0..width * height * 4).map(|_| 0u8)).unwrap();
@@ -65,25 +60,13 @@ fn main() {
                                   Dimensions::Dim2d { width, height },
                                   Format::R8G8B8A8Unorm, Some(queue.family())).unwrap();
 
-    let set = Arc::new(PersistentDescriptorSet::start(compute_pipeline.clone(), 0)
-        .add_image(image.clone()).unwrap()
-        .build().unwrap()
-    );
-
     let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
 
-    let camera_push_constant = cs::ty::Camera {
-        origin: camera.origin.as_array(),
-        upper_left: camera.upper_left.as_array(),
-        horizontal: camera.horizontal.as_array(),
-        vertical: camera.vertical.as_array(),
-        _dummy0: [1, 1, 1, 1],
-        _dummy1: [1, 1, 1, 1],
-        _dummy2: [1, 1, 1, 1],
-    };
+    let renderer = Renderer::new(device.clone(), queue.clone());
+
+    renderer.render(&camera, image.clone(), Box::new(vulkano::sync::now(device.clone())) as Box<GpuFuture>);
 
     let command_buffer = AutoCommandBufferBuilder::new(device.clone(), queue.family()).unwrap()
-        .dispatch([1024 / 8, 1024 / 8, 1], compute_pipeline.clone(), set.clone(), camera_push_constant).unwrap()
         .copy_image_to_buffer(image.clone(), buf.clone()).unwrap()
         .build().unwrap();
 
