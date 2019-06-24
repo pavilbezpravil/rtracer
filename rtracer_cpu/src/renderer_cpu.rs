@@ -7,7 +7,7 @@ use itertools::iproduct;
 use crate::scene::Scene;
 use crate::hit::Hit;
 use rtracer_core::image::{Image, ColorRGB};
-use rtracer_core::prelude::{Vec3, Ray, Object, Camera};
+use rtracer_core::prelude::{Vec3, Ray, Camera, RaycastCamera};
 use crate::scatter::Scatter;
 
 pub struct CPURenderer<T: Hit + Sync + Send> {
@@ -24,6 +24,8 @@ impl<T: Hit + Sync + Send> CPURenderer<T> {
     pub fn render(&self, image: &mut Image, camera: &Camera) {
         let (width, height) = (image.width(), image.height());
 
+        let raycast_camera = RaycastCamera::from_camera(&camera);
+
         iproduct!((0..height), (0..width))
             .zip(image.buf_mut().iter_mut())
             .par_bridge()
@@ -33,7 +35,7 @@ impl<T: Hit + Sync + Send> CPURenderer<T> {
                 for _ in 0..self.rays_for_pixel {
                     let (u, v) = ((x as f32 + rand::random::<f32>()) / width as f32,
                                   (y as f32 + rand::random::<f32>()) / height as f32);
-                    let ray = camera.get_ray((u, v));
+                    let ray = raycast_camera.get_ray((u, v));
 
                     total_color += self.color(&ray, 0);
                 }

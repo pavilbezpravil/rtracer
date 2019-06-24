@@ -78,6 +78,10 @@ impl Image {
         }
         Ok(())
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &ColorRGB> {
+        self.img.iter()
+    }
 }
 
 impl Index<(u32, u32)> for Image {

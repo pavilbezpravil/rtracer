@@ -3,9 +3,11 @@ extern crate rand;
 extern crate rtracer_core;
 
 use rtracer_core::prelude::*;
-use rtracer_core::image::{Image, ColorRGB};
+use rtracer_core::image::{Image};
 
 use rtracer_cpu::prelude::*;
+
+use rtracer_cpu::ext_image::{ImageBuffer, Rgba};
 
 const MAX_RAY_DEPTH: u32 = 32;
 const RAYS_FOR_PIXEL: u32 = 32;
@@ -77,7 +79,7 @@ fn test_scene_disk((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
     (scene, camera)
 }
 
-fn run() -> Result<(), Error> {
+fn run() {
     let args: Vec<String> = std::env::args().collect();
 
 //    let (width, height) = (1920, 1080);
@@ -94,25 +96,12 @@ fn run() -> Result<(), Error> {
 
     renderer.render(&mut img, &camera);
 
-    Ok(match args.len() {
-        1 => img.write_ppm(&mut std::io::stdout().lock())?,
-        2 => img.write_ppm(&mut std::fs::File::create(&args[1])?)?,
-        _ => return Err(Error::ArgParse),
-    })
+    img.write_ppm(&mut std::fs::File::create("image.ppm").unwrap());
+
+//    let image = ImageBuffer::<Rgba<u8>, _>::from_raw(1024, 1024, &img.iter()).unwrap();
+//    image.save("image.png").unwrap();
 }
 
 fn main() {
-    let exit_code = match run() {
-        Ok(_) => 0,
-        Err(Error::ArgParse) => {
-            eprintln!("wrong number params, expect 1 or 2.");
-            1
-        }
-        Err(Error::Io(err)) => {
-            eprintln!("{}", err);
-            2
-        }
-    };
-
-    std::process::exit(exit_code);
+    run();
 }
