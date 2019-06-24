@@ -25,8 +25,8 @@ impl From<std::io::Error> for Error {
     }
 }
 
-fn test_scene_dielectric((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
-    let mut scene = Scene::new();
+fn test_scene_dielectric((width, height): (u32, u32)) -> (HitableList<Object>, Camera) {
+    let mut scene = HitableList::new();
 
     let z = -1.2;
     let dist = 1.15;
@@ -57,8 +57,8 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (Scene<Object>, Camera)
     (scene, camera)
 }
 
-fn test_scene_triangle((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
-    let mut scene = Scene::new();
+fn test_scene_triangle((width, height): (u32, u32)) -> (HitableList<Object>, Camera) {
+    let mut scene = HitableList::new();
 
     let size = 1.;
 
@@ -70,8 +70,8 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
     (scene, camera)
 }
 
-fn test_scene_disk((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
-    let mut scene = Scene::new();
+fn test_scene_disk((width, height): (u32, u32)) -> (HitableList<Object>, Camera) {
+    let mut scene = HitableList::new();
 
     scene.add(Object::new_disk(Disk::new(Plane::new(-Vec3::new_z(), Vec3::new_z()), 1.),
                                Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
@@ -81,8 +81,8 @@ fn test_scene_disk((width, height): (u32, u32)) -> (Scene<Object>, Camera) {
     (scene, camera)
 }
 
-fn test_scene_with_random_spheres((width, height): (u32, u32), n: usize) -> (Scene<Object>, Camera) {
-    let mut scene = Scene::new();
+fn test_scene_with_random_spheres((width, height): (u32, u32), n: usize) -> (HitableList<Object>, Camera) {
+    let mut scene = HitableList::new();
 
     let size = 25f32;
 
@@ -111,8 +111,8 @@ fn run() {
     let args: Vec<String> = std::env::args().collect();
 
 //    let (width, height) = (1920, 1080);
-    let (width, height) = (640, 480);
-//    let (width, height) = (200, 100);
+//    let (width, height) = (640, 480);
+    let (width, height) = (200, 100);
     let mut img = Image::new(width, height);
 
     let (scene, camera) = test_scene_with_random_spheres((width, height), 50);

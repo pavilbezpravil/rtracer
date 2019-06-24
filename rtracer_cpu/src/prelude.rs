@@ -1,6 +1,6 @@
 pub use crate::{
     hit::{HitRecord, Hit},
-    scene::Scene,
+    hitable_list::HitableList,
     scatter::{Scatter, ScatteredRay},
     renderer_cpu::CPURenderer,
 };

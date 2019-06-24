@@ -16,6 +16,7 @@ impl HitRecord {
 
 pub trait Hit {
     fn hit(&self, ray: &Ray, t_min_max: (f32, f32)) -> Option<HitRecord>;
+    fn aabb(&self) -> Aabb;
 }
 
 impl Hit for Object {
@@ -35,5 +36,9 @@ impl Hit for Object {
         } else {
             None
         }
+    }
+
+    fn aabb(&self) -> Aabb {
+        self.shape.aabb()
     }
 }

@@ -8,6 +8,6 @@ extern crate rtracer_core;
 pub mod prelude;
 
 mod hit;
-mod scene;
+mod hitable_list;
 mod scatter;
 mod renderer_cpu;

@@ -4,7 +4,7 @@ use rayon::prelude::*;
 
 use itertools::iproduct;
 
-use crate::scene::Scene;
+use crate::hitable_list::HitableList;
 use crate::hit::Hit;
 use rtracer_core::image::{Image, ColorRGB};
 use rtracer_core::prelude::{Vec3, Ray, Camera, RaycastCamera};
@@ -13,12 +13,12 @@ use crate::scatter::Scatter;
 pub struct CPURenderer<T: Hit + Sync + Send> {
     rays_for_pixel: u32,
     max_ray_depth: u32,
-    pub scene: Scene<T>,
+    pub scene: HitableList<T>,
 }
 
 impl<T: Hit + Sync + Send> CPURenderer<T> {
     pub fn new(rays_for_pixel: u32, max_ray_depth: u32) -> CPURenderer<T> {
-        CPURenderer { rays_for_pixel, max_ray_depth, scene: Scene::default() }
+        CPURenderer { rays_for_pixel, max_ray_depth, scene: HitableList::default() }
     }
 
     pub fn render(&self, image: &mut Image, camera: &Camera) {

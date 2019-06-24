@@ -18,6 +18,12 @@ impl Aabb {
         Aabb { min, max }
     }
 
+    pub fn empty() -> Aabb {
+        let min = std::f32::MIN;
+        let max = std::f32::MAX;
+        Aabb::new(Vec3::from_value(max), Vec3::from_value(min))
+    }
+
     pub fn center(&self) -> Vec3 {
         (self.min + self.max) / 2.
     }
@@ -28,6 +34,10 @@ impl Aabb {
 
     pub fn normal_at(&self, point: &Vec3) -> Vec3 {
         aabb_noraml_at(self, point)
+    }
+
+    pub fn add_aabb(&mut self, other: &Aabb) {
+        *self = Aabb::union(self, other);
     }
 
     pub fn union(a: &Aabb, b: &Aabb) -> Aabb {
