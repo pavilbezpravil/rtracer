@@ -19,3 +19,4 @@ mod primitive;
 mod object;
 mod camera;
 mod material;
+mod scene_data;

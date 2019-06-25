@@ -4,18 +4,23 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
 
-layout(push_constant) uniform Camera {
+layout(push_constant) uniform PushConstant {
     vec3 origin;
     vec3 upper_left;
     vec3 horizontal;
     vec3 vertical;
     float seed;
-} camera;
+    uint shape_count;
+} push_constant;
+
+layout(set = 0, binding = 0) buffer Spheres {
+    vec4 data[]; // vec3 - pos, float - radius
+} spheres;
 
 #define M_PI 3.1415926535897932384626433832795
 
 float drand48(vec2 co) {
-    return 2 * fract(sin(camera.seed + dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453) - 1;
+    return 2 * fract(sin(push_constant.seed + dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453) - 1;
 }
 
 vec3 random_in_unit_disk(vec2 co) {
@@ -69,7 +74,7 @@ vec3 point_at_parameter(Ray r, float t) {
 }
 
 Ray get_ray(float u, float v) {
-    return Ray(camera.origin, camera.upper_left + u * camera.horizontal + v * camera.vertical - camera.origin);
+    return Ray(push_constant.origin, push_constant.upper_left + u * push_constant.horizontal + v * push_constant.vertical - push_constant.origin);
 }
 
 const int mat_lambert = 1;

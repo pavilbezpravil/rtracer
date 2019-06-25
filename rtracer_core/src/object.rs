@@ -8,7 +8,7 @@ pub struct Object {
 
 impl Object {
     pub fn new(primitive: Primitive, material: Material) -> Object {
-        Object { primitive: shape, material }
+        Object { primitive, material }
     }
 
     pub fn new_sphere(sphere: Sphere, material: Material) -> Object {

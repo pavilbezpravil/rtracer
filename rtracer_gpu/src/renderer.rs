@@ -15,7 +15,7 @@ extern crate rand;
 pub mod cs {
     vulkano_shaders::shader! {
                 ty: "compute",
-                path: "src/shaders/one_sphere.comp",
+                path: "src/shaders/spheres.comp",
     }
 }
 
@@ -44,12 +44,13 @@ impl Renderer {
 
         let raycast_camera = RaycastCamera::from_camera(camera);
 
-        let camera_push_constant = cs::ty::Camera {
+        let camera_push_constant = cs::ty::PushConstant {
             origin: raycast_camera.origin.as_array(),
             upper_left: raycast_camera.upper_left.as_array(),
             horizontal: raycast_camera.horizontal.as_array(),
             vertical: raycast_camera.vertical.as_array(),
             seed: rand::thread_rng().gen(),
+            shape_count: 0,
             _dummy0: [1, 1, 1, 1],
             _dummy1: [1, 1, 1, 1],
             _dummy2: [1, 1, 1, 1],
