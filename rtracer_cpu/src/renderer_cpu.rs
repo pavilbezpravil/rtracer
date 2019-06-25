@@ -10,18 +10,17 @@ use rtracer_core::image::{Image, ColorRGB};
 use rtracer_core::prelude::{Vec3, Ray, Camera, RaycastCamera};
 use crate::scatter::Scatter;
 
-pub struct CPURenderer<T: Hit + Sync + Send> {
+pub struct CPURenderer {
     rays_for_pixel: u32,
     max_ray_depth: u32,
-    pub scene: HitableList<T>,
 }
 
-impl<T: Hit + Sync + Send> CPURenderer<T> {
-    pub fn new(rays_for_pixel: u32, max_ray_depth: u32) -> CPURenderer<T> {
-        CPURenderer { rays_for_pixel, max_ray_depth, scene: HitableList::default() }
+impl CPURenderer {
+    pub fn new(rays_for_pixel: u32, max_ray_depth: u32) -> CPURenderer {
+        CPURenderer { rays_for_pixel, max_ray_depth }
     }
 
-    pub fn render(&self, image: &mut Image, camera: &Camera) {
+    pub fn render<H: Hit + Sync + Send>(&self, image: &mut Image, camera: &Camera, scene: &H) {
         let (width, height) = (image.width(), image.height());
 
         let raycast_camera = RaycastCamera::from_camera(&camera);
@@ -37,7 +36,7 @@ impl<T: Hit + Sync + Send> CPURenderer<T> {
                                   (y as f32 + rand::random::<f32>()) / height as f32);
                     let ray = raycast_camera.get_ray((u, v));
 
-                    total_color += self.color(&ray, 0);
+                    total_color += self.color(&ray, 0, scene);
                 }
                 total_color /= self.rays_for_pixel as f32;
                 total_color = total_color.gamma_correction(2f32);
@@ -46,18 +45,19 @@ impl<T: Hit + Sync + Send> CPURenderer<T> {
             });
     }
 
-    fn color(&self, ray: &Ray, depth: u32) -> ColorRGB {
-        if let Some(rec) = self.scene.hit(ray, (1e-5, std::f32::MAX)) {
+    fn color<H: Hit>(&self, ray: &Ray, depth: u32, scene: &H) -> ColorRGB {
+        if let Some(rec) = scene.hit(ray, (0., std::f32::MAX)) {
             if let Some(scattered) = rec.material.scatter(ray, &rec) {
                 if depth < self.max_ray_depth {
-                    return scattered.attenuation * self.color(&scattered.ray, depth + 1);
+                    return scattered.attenuation * self.color(&scattered.ray, depth + 1, scene);
                 }
             }
             Vec3::origin()
         } else {
-            let unit_direction = ray.direction.make_unit();
-            let t = 0.5f32 * (unit_direction.y() + 1f32);
-            (1f32 - t) * Vec3::new(1f32, 1f32, 1f32) + t * Vec3::new(0.5f32, 0.7f32, 1f32)
+//            let unit_direction = ray.direction.make_unit();
+//            let t = 0.5f32 * (unit_direction.y() + 1f32);
+//            (1f32 - t) * Vec3::new(1f32, 1f32, 1f32) + t * Vec3::new(0.5f32, 0.7f32, 1f32)
+            Vec3::unit()
         }
     }
 }

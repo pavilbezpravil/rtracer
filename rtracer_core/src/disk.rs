@@ -4,6 +4,7 @@ use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_disk_intersection;
 
+#[derive(Copy, Clone)]
 pub struct Disk {
     pub plane: Plane,
     pub radius: f32,

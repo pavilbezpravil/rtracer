@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+#[derive(Copy, Clone)]
 pub struct Object {
     pub shape: Shape,
     pub material: Material,

@@ -3,4 +3,5 @@ pub use crate::{
     hitable_list::HitableList,
     scatter::{Scatter, ScatteredRay},
     renderer_cpu::CPURenderer,
+    bvh::BvhNode,
 };

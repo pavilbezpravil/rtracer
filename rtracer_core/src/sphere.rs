@@ -4,6 +4,7 @@ use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_sphere_intersection;
 
+#[derive(Copy, Clone)]
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,

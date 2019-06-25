@@ -22,7 +22,7 @@ pub trait Hit {
 impl Hit for Object {
     fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
         if let Some(t) = self.shape.intersect(ray, (t_min, t_max)) {
-            let point = ray.point_at_parameter(t);
+            let mut point = ray.point_at_parameter(t);
 
             let normal = match &self.shape {
                 Shape::Sphere(s) => s.normal_at(&point),
@@ -32,6 +32,7 @@ impl Hit for Object {
                 Shape::Disk(s) => s.plane.normal,
             };
 
+            point += normal * 1e-2;
             Some(HitRecord::new(t, point, normal, &self.material))
         } else {
             None

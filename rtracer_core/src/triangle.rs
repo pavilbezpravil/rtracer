@@ -4,6 +4,7 @@ use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_triangle_intersection;
 
+#[derive(Copy, Clone)]
 pub struct Triangle {
     pub v0: Vec3,
     pub v1: Vec3,

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+#[derive(Copy, Clone)]
 pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),

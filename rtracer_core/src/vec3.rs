@@ -39,7 +39,7 @@ impl Vec3 {
     }
 
     pub fn unit() -> Vec3 {
-        Vec3::new(1., 1., 1.)
+        Vec3::from_value(1.)
     }
 
     pub fn x(&self) -> f32 {
