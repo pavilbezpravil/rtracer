@@ -3,7 +3,7 @@ use crate::vec3::Vec3;
 use crate::intersect::Intersect;
 use crate::ray::Ray;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Cube {
     aabb: Aabb,
 }

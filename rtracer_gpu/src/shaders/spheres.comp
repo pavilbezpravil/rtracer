@@ -4,18 +4,26 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
 
+layout(set = 0, binding = 1) buffer SpheresBuffer {
+    vec4 spheres[]; // vec3 - pos, float - radius
+};
+
+layout(set = 0, binding = 2) buffer MaterialsBuffer {
+    vec4 materials[]; // 8 float
+};
+
+layout(set = 0, binding = 3) buffer ObjectsBuffer {
+    uvec2 objects[]; // primitiveId, materialId
+};
+
 layout(push_constant) uniform PushConstant {
     vec3 origin;
     vec3 upper_left;
     vec3 horizontal;
     vec3 vertical;
     float seed;
-    uint shape_count;
+    uint objects_count;
 } push_constant;
-
-layout(set = 0, binding = 0) buffer Spheres {
-    vec4 data[]; // vec3 - pos, float - radius
-} spheres;
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -91,7 +99,7 @@ struct Material {
    2 = metal
    3 = dielectric
    */
-    int scatter_function;
+    uint scatter_function;
 };
 
 struct HitRecord {
@@ -104,7 +112,11 @@ struct HitRecord {
 struct Sphere {
     vec3 center;
     float radius;
-    Material mat;
+};
+
+struct Object {
+    Sphere sphere;
+    Material material;
 };
 
 Material gray_metal = Material(vec3(0.8, 0.8, 0.8), 0.0001, 0.0, mat_metal);
@@ -112,14 +124,40 @@ Material gold_metal = Material(vec3(0.8, 0.6, 0.2), 0.0001, 0.0, mat_metal);
 Material dielectric = Material(vec3(0), 0.0, 1.5, mat_dielectric);
 Material lambert    = Material(vec3(0.8, 0.8, 0.0), 0.0, 0.0, mat_lambert);
 
-Sphere world[] = Sphere[](
-    Sphere(vec3(1, 0, -1), 0.5, gray_metal),
-    Sphere(vec3(-1, 0, -1), 0.5, gold_metal),
-    Sphere(vec3(0, 0, -1.5), 0.5, gray_metal),
-//    Sphere(vec3(0, 0, 1), 0.5, dielectric),
-//    Sphere(vec3(0, 0, 1), -0.45, dielectric),
-    Sphere(vec3(0, -100.5, -1), 100, lambert)
-);
+Sphere sphere_from_buffer(uint idx) {
+    vec4 data = spheres[idx];
+    vec3 center = data.xyz;
+    float radius = data.w;
+    return Sphere(center, radius);
+}
+
+Material material_from_buffer(uint idx) {
+    vec4 data1 = materials[idx * 2];
+    vec4 data2 = materials[idx * 2 + 1];
+
+    vec3 albedo = data1.xyz;
+    float fuzz = data1.w;
+    float ref_idx = data2.x;
+
+//    uint scatter_function = floatBitsToUint(data2.w);
+    uint scatter_function = uint(data2.w);
+
+    if (scatter_function < 1 || scatter_function > 3) {
+        scatter_function = 1;
+        albedo = vec3(0);
+    }
+
+    return Material(albedo, fuzz, ref_idx, scatter_function);
+}
+
+Object object_from_buffer(uint idx) {
+    uvec2 data = objects[idx];
+    uint primitiveId = data.x;
+    uint materialId = data.y;
+
+    return Object(sphere_from_buffer(primitiveId), material_from_buffer(materialId));
+//    return Object(sphere_from_buffer(primitiveId), gold_metal);
+}
 
 bool lambertian_scatter(in Material mat, in Ray r, in HitRecord hit, out vec3 attenuation, out Ray scattered) {
     vec3 target = hit.p + hit.normal + random_in_unit_sphere(hit.p);
@@ -176,7 +214,7 @@ bool dispatch_scatter(in Ray r, HitRecord hit, out vec3 attenuation, out Ray sca
     }
 }
 
-bool sphere_hit(Sphere sp, Ray r, float t_min, float t_max, out HitRecord hit) {
+bool sphere_hit(Sphere sp, Material material, Ray r, float t_min, float t_max, out HitRecord hit) {
     vec3 oc = r.origin - sp.center;
     float a = dot(r.direction, r.direction);
     float b = dot(oc, r.direction);
@@ -188,7 +226,7 @@ bool sphere_hit(Sphere sp, Ray r, float t_min, float t_max, out HitRecord hit) {
             hit.t = temp;
             hit.p = point_at_parameter(r, hit.t);
             hit.normal = (hit.p - sp.center) / sp.radius;
-            hit.mat = sp.mat;
+            hit.mat = material;
             return true;
         }
         temp = (-b + sqrt(b*b-a*c)) /a;
@@ -196,7 +234,7 @@ bool sphere_hit(Sphere sp, Ray r, float t_min, float t_max, out HitRecord hit) {
             hit.t = temp;
             hit.p = point_at_parameter(r, hit.t);
             hit.normal = (hit.p - sp.center) / sp.radius;
-            hit.mat = sp.mat;
+            hit.mat = material;
             return true;
         }
     }
@@ -208,8 +246,9 @@ bool world_hit(Ray r, float t_min, float t_max, out HitRecord hit) {
     bool hit_anything = false;
     float closest_so_far = t_max;
 
-    for (int i = 0; i < world.length(); i++) {
-        if (sphere_hit(world[i], r, t_min, closest_so_far, temp_hit)) {
+    for (int i = 0; i < push_constant.objects_count; i++) {
+        Object o = object_from_buffer(i);
+        if (sphere_hit(o.sphere, o.material, r, t_min, closest_so_far, temp_hit)) {
             hit_anything = true;
             hit = temp_hit;
             closest_so_far = temp_hit.t;
@@ -256,7 +295,6 @@ void main() {
     for (int s = 0; s < nsamples; s++) {
         // TODO: triming
         vec2 uv = norm_coordinates + vec2(drand48(col.xy + s), drand48(col.xy + s + 1)) / vec2(imageSize(img));
-//        vec2 uv = norm_coordinates;
 
         Ray r = get_ray(uv.x, uv.y);
         col += color(r);

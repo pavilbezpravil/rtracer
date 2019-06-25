@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Primitive {
     Sphere(Sphere),
     Plane(Plane),
@@ -28,5 +28,23 @@ impl Intersect for Primitive {
             Primitive::Triangle(s) => s.aabb(),
             Primitive::Disk(s) => s.aabb(),
         }
+    }
+}
+
+impl From<Sphere> for Primitive {
+    fn from(s: Sphere) -> Self {
+        Primitive::Sphere(s)
+    }
+}
+
+impl From<Cube> for Primitive {
+    fn from(c: Cube) -> Self {
+        Primitive::Cube(c)
+    }
+}
+
+impl From<Triangle> for Primitive {
+    fn from(t: Triangle) -> Self {
+        Primitive::Triangle(t)
     }
 }

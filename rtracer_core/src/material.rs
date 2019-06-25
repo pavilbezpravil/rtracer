@@ -41,3 +41,21 @@ impl Dielectric {
         Dielectric { attenuation, ref_idx }
     }
 }
+
+impl From<Lambertian> for Material {
+    fn from(l: Lambertian) -> Self {
+        Material::Lambertian(l)
+    }
+}
+
+impl From<Metal> for Material {
+    fn from(m: Metal) -> Self {
+        Material::Metal(m)
+    }
+}
+
+impl From<Dielectric> for Material {
+    fn from(d: Dielectric) -> Self {
+        Material::Dielectric(d)
+    }
+}

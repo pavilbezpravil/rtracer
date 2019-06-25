@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use crate::primitive::Primitive;
 use crate::material::Material;
 
+// !todo: remove pub from inner u32
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct ObjectId(u32);
+pub struct ObjectId(pub u32);
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct MaterialId(u32);
+pub struct MaterialId(pub u32);
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct PrimitiveId(u32);
+pub struct PrimitiveId(pub u32);
 
 #[derive(Copy, Clone)]
 struct NextIds {
@@ -56,6 +57,30 @@ impl SceneData {
             primitives: HashMap::new(),
             next_ids: NextIds::new()
         }
+    }
+
+    pub fn objects_iter(&self) -> impl ExactSizeIterator<Item=(&ObjectId, &Object)> {
+        self.objects.iter()
+    }
+
+    pub fn materials_iter(&self) -> impl ExactSizeIterator<Item=(&MaterialId, &Material)> {
+        self.materials.iter()
+    }
+
+    pub fn primitives_iter(&self) -> impl ExactSizeIterator<Item=(&PrimitiveId, &Primitive)> {
+        self.primitives.iter()
+    }
+
+    pub fn objects_count(&self) -> usize {
+        self.objects.len()
+    }
+
+    pub fn materials_count(&self) -> usize {
+        self.materials.len()
+    }
+
+    pub fn primitives_count(&self) -> usize {
+        self.primitives.len()
     }
 
     pub fn object(&self, id: ObjectId) -> Option<&Object> {

@@ -9,16 +9,28 @@ use rtracer_gpu::frame_counter::FrameCounter;
 use rtracer_gpu::renderer::Renderer;
 
 fn main() {
-    let (width, height) = (1920, 1080);
+    let (width, height) = (1920 / 2, 1080 / 2);
+//    let (width, height) = (1920, 1080);
     // make size be devided by 8
     let (width, height) = ((width / 8) * 8, (height / 8) * 8);
 
     let mut test_bed = Testbed::new();
 
     let camera = RefCell::new(Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32));
-    let renderer = Renderer::new(test_bed.device.clone(), test_bed.queue.clone());
 
     let mut frame_counter = FrameCounter::new();
+
+    let mut scene = SceneData::new();
+    scene.create_object(Sphere::new(Vec3::new(-1., 0., -1.), 0.5).into(),
+                        Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.0001).into());
+    scene.create_object(Sphere::new(Vec3::new(0., 0., -1.5), 0.5).into(),
+                        Metal::new(Vec3::new(0.2, 0.3, 0.34), 0.0001).into());
+    scene.create_object(Sphere::new(Vec3::new(1., 0., -1.), 0.5).into(),
+                        Metal::new(Vec3::new(0.45, 0.2, 0.4), 0.0001).into());
+    scene.create_object(Sphere::new(Vec3::new(0., -100.5, -1.), 100.).into(),
+                        Lambertian::new(Vec3::new(0.1, 0.8, 0.3)).into());
+
+    let renderer = Renderer::new(test_bed.device.clone(), test_bed.queue.clone(), scene);
 
     let mut render_handle = |image, future| {
         renderer.render(&camera.borrow(), image, future)

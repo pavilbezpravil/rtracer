@@ -3,7 +3,7 @@ use crate::ray::Ray;
 use crate::intersect::Intersect;
 use crate::intersection::ray_aabb_intersection;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Aabb {
     pub min: Vec3,
     pub max: Vec3,

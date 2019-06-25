@@ -4,7 +4,7 @@ use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_plane_intersection;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Plane {
     pub origin: Vec3,
     pub normal: Vec3,
