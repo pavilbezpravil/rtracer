@@ -21,15 +21,15 @@ pub trait Hit {
 
 impl Hit for Object {
     fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
-        if let Some(t) = self.shape.intersect(ray, (t_min, t_max)) {
+        if let Some(t) = self.primitive.intersect(ray, (t_min, t_max)) {
             let mut point = ray.point_at_parameter(t);
 
-            let normal = match &self.shape {
-                Shape::Sphere(s) => s.normal_at(&point),
-                Shape::Plane(s) => s.normal,
-                Shape::Cube(s) => s.normal_at(&point),
-                Shape::Triangle(s) => s.normal(),
-                Shape::Disk(s) => s.plane.normal,
+            let normal = match &self.primitive {
+                Primitive::Sphere(s) => s.normal_at(&point),
+                Primitive::Plane(s) => s.normal,
+                Primitive::Cube(s) => s.normal_at(&point),
+                Primitive::Triangle(s) => s.normal(),
+                Primitive::Disk(s) => s.plane.normal,
             };
 
             point += normal * 1e-2;
@@ -40,6 +40,6 @@ impl Hit for Object {
     }
 
     fn aabb(&self) -> Aabb {
-        self.shape.aabb()
+        self.primitive.aabb()
     }
 }

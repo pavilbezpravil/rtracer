@@ -15,7 +15,7 @@ mod plane;
 mod cube;
 mod triangle;
 mod disk;
-mod shape;
+mod primitive;
 mod object;
 mod camera;
 mod material;

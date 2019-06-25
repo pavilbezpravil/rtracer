@@ -7,7 +7,7 @@ pub use crate::{
     cube::Cube,
     triangle::Triangle,
     disk::Disk,
-    shape::Shape,
+    primitive::Primitive,
     intersect::Intersect,
     object::Object,
     camera::{Camera, RaycastCamera},
