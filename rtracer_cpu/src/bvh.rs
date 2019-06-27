@@ -23,8 +23,6 @@ impl<H: Hit + Copy + Clone> BvhNode<H> {
         let n = objs.len();
         assert!(n != 0, "cant build bvh from zero objects");
 
-        let (left, right): (Box<H>, Box<H>);
-
         if n == 1 {
             BvhNode { data: BvhNodeData::Leaf(objs[0]), aabb: objs[0].aabb() }
         } else {

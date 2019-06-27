@@ -10,4 +10,4 @@ rtracer_cpu = { path = "rtracer_cpu" }
 rtracer_gpu = { path = "rtracer_gpu" }
 
 rand = "*"
-winit = "0.18"
+winit = "0.19"
