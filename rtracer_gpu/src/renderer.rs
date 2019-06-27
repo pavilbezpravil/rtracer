@@ -97,7 +97,7 @@ impl Renderer {
     }
 }
 
-fn objects_to_gpu_buf<'a>(os: impl ExactSizeIterator<Item=(&'a ObjectId, &'a Object)>) -> Vec<[u32; 2]> {
+fn objects_to_gpu_buf<'a>(os: impl ExactSizeIterator<Item=(&'a ObjectId, &'a SceneObject)>) -> Vec<[u32; 2]> {
     // !todo: tmp
     let n = os.len();
 

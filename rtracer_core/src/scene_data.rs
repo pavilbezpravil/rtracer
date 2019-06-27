@@ -43,7 +43,7 @@ impl NextIds {
 }
 
 pub struct SceneData {
-    objects: HashMap<ObjectId, Object>,
+    objects: HashMap<ObjectId, SceneObject>,
     materials: HashMap<MaterialId, Material>,
     primitives: HashMap<PrimitiveId, Primitive>,
     next_ids: NextIds,
@@ -59,7 +59,7 @@ impl SceneData {
         }
     }
 
-    pub fn objects_iter(&self) -> impl ExactSizeIterator<Item=(&ObjectId, &Object)> {
+    pub fn objects_iter(&self) -> impl ExactSizeIterator<Item=(&ObjectId, &SceneObject)> {
         self.objects.iter()
     }
 
@@ -83,7 +83,7 @@ impl SceneData {
         self.primitives.len()
     }
 
-    pub fn object(&self, id: ObjectId) -> Option<&Object> {
+    pub fn object(&self, id: ObjectId) -> Option<&SceneObject> {
         self.objects.get(&id)
     }
 
@@ -113,7 +113,7 @@ impl SceneData {
         }
 
         let id = self.next_ids.next_object_id();
-        let object = Object::new(primitive, material);
+        let object = SceneObject::new(primitive, material);
         self.objects.insert(id, object);
         Some(id)
     }
@@ -127,14 +127,14 @@ impl SceneData {
 }
 
 #[derive(Copy, Clone)]
-pub struct Object {
+pub struct SceneObject {
     primitive: PrimitiveId,
     material: MaterialId,
 }
 
-impl Object {
-    fn new(primitive: PrimitiveId, material: MaterialId) -> Object {
-        Object { primitive, material }
+impl SceneObject {
+    fn new(primitive: PrimitiveId, material: MaterialId) -> SceneObject {
+        SceneObject { primitive, material }
     }
 
     pub fn primitive(&self) -> PrimitiveId {
