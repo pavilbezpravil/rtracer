@@ -1,13 +1,11 @@
-use std::cell::RefCell;
-
-use winit::{Event, WindowEvent, ElementState, VirtualKeyCode};
+use std::path::Path;
 
 use rtracer_core::prelude::*;
+use rtracer_core::model_loader::load_geometry_obj;
 
 use rtracer_gpu::testbed::Testbed;
 use rtracer_gpu::frame_counter::FrameCounter;
 use rtracer_gpu::renderer::Renderer;
-use std::alloc::handle_alloc_error;
 use vulkano::sync::GpuFuture;
 
 fn create_scene() -> SceneData {
@@ -21,10 +19,27 @@ fn create_scene() -> SceneData {
     scene.create_object(Sphere::new(Vec3::new(0., -100.5, -1.), 100.).into(),
                         Lambertian::new(Vec3::new(0.1, 0.8, 0.3)).into());
 
-//    scene.create_object(Cube::new(Vec3::new(0., 0., 0.), Vec3::new(2., 2., 2.)).into(),
-//                        Lambertian::new(Vec3::new(0.1, 0.8, 0.3)).into());
+    let material = Metal::new(Vec3::new(0.45, 0.2, 0.4), 0.0001).into();
+    scene.create_object(Triangle::new(Vec3::new(-1., 0., 0.), Vec3::new(0., 1., 0.), Vec3::new(1., 0., 0.)).into(), material);
+
+//    add_triangles_to_scene(&mut scene, &load_some_obj(), material);
+
+    scene.create_object(Cube::new(Vec3::new(0., 0., 0.), Vec3::new(2., 2., 2.)).into(),
+                        Metal::new(Vec3::new(0.8, 0.8, 0.8), 0.0001).into());
 
     scene
+}
+
+fn add_triangles_to_scene(scene: &mut SceneData, ts: &[Triangle], material: Material) {
+    for t in ts {
+        scene.create_object((*t).into(), material);
+    }
+}
+
+fn load_some_obj() -> Vec<Triangle> {
+    let path = "models/cube.obj";
+//    let path = "models/sponza.obj";
+    load_geometry_obj(Path::new(path)).unwrap()
 }
 
 fn main() {

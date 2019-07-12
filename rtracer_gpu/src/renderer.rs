@@ -17,7 +17,8 @@ extern crate rand;
 pub mod cs {
     vulkano_shaders::shader! {
                 ty: "compute",
-                path: "src/shaders/spheres.comp",
+//                path: "src/shaders/spheres.comp",
+                path: "src/shaders/primitive.comp",
     }
 }
 
@@ -115,11 +116,11 @@ fn objects_to_gpu_buf<'a>(os: impl ExactSizeIterator<Item=(&'a ObjectId, &'a Sce
     buf
 }
 
-fn primitives_to_gpu_buf<'a>(ps: impl ExactSizeIterator<Item=(&'a PrimitiveId, &'a Primitive)>) -> Vec<[f32; 4]> {
+fn primitives_to_gpu_buf<'a>(ps: impl ExactSizeIterator<Item=(&'a PrimitiveId, &'a Primitive)>) -> Vec<[f32; 12]> {
     // !todo: tmp
     let n = ps.len();
 
-    let mut buf = vec![[0., 0., 0., 0.]; n];
+    let mut buf = vec![[0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]; n];
 
     for (idx, p) in ps {
         buf[idx.0 as usize] = primitive_to_gpu(p);
@@ -128,25 +129,44 @@ fn primitives_to_gpu_buf<'a>(ps: impl ExactSizeIterator<Item=(&'a PrimitiveId, &
     buf
 }
 
-fn primitive_to_gpu(primitive: &Primitive) -> [f32; 4] {
+fn primitive_to_gpu(primitive: &Primitive) -> [f32; 12] {
     match primitive {
         Primitive::Sphere(s) => {
             sphere_to_gpu(s)
         },
-//        Primitive::Cube(c) => {
-//            cube_to_gpu(c)
-//        },
+        Primitive::Triangle(t) => {
+            triangle_to_gpu(t)
+        },
+        Primitive::Cube(c) => {
+            cube_to_gpu(c)
+        },
         _ => panic!("unsupported primitive")
     }
 }
 
-fn sphere_to_gpu(s: &Sphere) -> [f32; 4] {
-    [s.center[0], s.center[1], s.center[2], s.radius]
+fn sphere_to_gpu(s: &Sphere) -> [f32; 12] {
+    [
+        0., 0., 0., 1.,
+        s.center[0], s.center[1], s.center[2], s.radius,
+        0., 0., 0., 0.,
+    ]
 }
 
-//fn cube_to_gpu(c: &Cube) -> [f32; 4] {
-//    [s.center[0], s.center[1], s.center[2], s.radius]
-//}
+fn triangle_to_gpu(t: &Triangle) -> [f32; 12] {
+    [
+        t.v0[0], t.v0[1], t.v0[2], 2.,
+        t.v1[0], t.v1[1], t.v1[2], 0.,
+        t.v2[0], t.v2[1], t.v2[2], 0.,
+    ]
+}
+
+fn cube_to_gpu(c: &Cube) -> [f32; 12] {
+    [
+        c.aabb().min[0], c.aabb().min[1], c.aabb().min[2], 3.,
+        c.aabb().max[0], c.aabb().max[1], c.aabb().max[2], 0.,
+        0., 0., 0., 0.,
+    ]
+}
 
 fn materials_to_gpu_buf<'a>(ms: impl ExactSizeIterator<Item=(&'a MaterialId, &'a Material)>) -> Vec<[f32; 8]> {
     // !todo: tmp

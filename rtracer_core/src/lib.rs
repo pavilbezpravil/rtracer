@@ -29,3 +29,4 @@ mod object;
 mod camera;
 mod material;
 mod scene_data;
+pub mod model_loader;

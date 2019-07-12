@@ -1,0 +1,477 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
+
+layout(set = 0, binding = 1) buffer PrimitiveBuffer {
+    vec4 primitives[];
+    // Sphere = vec3 - pos, float - radius
+    // Triangle = vec3 - v0, _float, vec3 - v1, _float, vec3 - v2, _float,
+};
+
+layout(set = 0, binding = 2) buffer MaterialsBuffer {
+    vec4 materials[]; // 8 float
+};
+
+layout(set = 0, binding = 3) buffer ObjectsBuffer {
+    uvec2 objects[]; // primitiveId, materialId
+};
+
+layout(push_constant) uniform PushConstant {
+    vec3 origin;
+    vec3 upper_left;
+    vec3 horizontal;
+    vec3 vertical;
+    float seed;
+    uint objects_count;
+} push_constant;
+
+#define M_PI 3.1415926535897932384626433832795
+
+float drand48(vec2 co) {
+    return 2 * fract(sin(push_constant.seed + dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453) - 1;
+}
+
+vec3 random_in_unit_disk(vec2 co) {
+    vec3 p;
+    int n = 0;
+    do {
+        p = vec3(drand48(co.xy), drand48(co.yx), 0);
+        n++;
+    } while (dot(p, p) >= 1.0 && n < 3);
+    return p;
+}
+
+float squared_length(vec3 v) {
+    return v.x*v.x + v.y*v.y + v.z*v.z;
+}
+
+vec3 random_in_unit_sphere(vec3 p) {
+    int n = 0;
+    do {
+        p = vec3(drand48(p.xy), drand48(p.zy), drand48(p.xz));
+        n++;
+    } while (squared_length(p) >= 1.0 && n < 3);
+    return p;
+}
+
+float schlick(in float cosine, in float ref_idx) {
+    float r0 = (1 - ref_idx) / (1 + ref_idx);
+    r0 = r0 * r0;
+    return r0 + (1 - r0) * pow((1 - cosine), 5);
+}
+
+bool refract(in vec3 v, in vec3 n, in float ni_over_nt, out vec3 refracted) {
+    vec3 uv = normalize(v);
+    float dt = dot(uv, n);
+    float discriminant = 1.0 - ni_over_nt * ni_over_nt * (1 - dt * dt);
+    if (discriminant > 0) {
+        refracted = ni_over_nt * (uv - n * dt) - n * sqrt(discriminant);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+};
+
+vec3 point_at_parameter(Ray r, float t) {
+    return r.origin + t * r.direction;
+}
+
+Ray get_ray(float u, float v) {
+    return Ray(push_constant.origin, push_constant.upper_left + u * push_constant.horizontal + v * push_constant.vertical - push_constant.origin);
+}
+
+const int mat_lambert = 1;
+const int mat_metal = 2;
+const int mat_dielectric = 3;
+
+struct Material {
+    vec3 albedo;
+    float fuzz;
+    float ref_idx;
+
+/* scatter function can be:
+   1 = lambert
+   2 = metal
+   3 = dielectric
+   */
+    uint scatter_function;
+};
+
+struct HitRecord {
+    float t;
+    vec3 p;
+    vec3 normal;
+    Material mat;
+};
+
+struct Sphere {
+    vec3 center;
+    float radius;
+};
+
+struct Triangle {
+    vec3 v0;
+    vec3 e0;
+    vec3 e1;
+};
+
+struct Cube {
+    vec3 min;
+    vec3 max;
+};
+
+const int PRIMITIVE_SPHERE = 1;
+const int PRIMITIVE_TRIANGLE = 2;
+const int PRIMITIVE_CUBE = 3;
+
+struct Primitive {
+    vec4 data0; // last float = type
+    vec4 data1;
+    vec4 data2;
+};
+
+uint primitive_type(in Primitive p) {
+    return uint(p.data0.w);
+}
+
+struct Object {
+    Primitive primitive;
+    Material material;
+};
+
+Material gray_metal = Material(vec3(0.8, 0.8, 0.8), 0.0001, 0.0, mat_metal);
+Material gold_metal = Material(vec3(0.8, 0.6, 0.2), 0.0001, 0.0, mat_metal);
+Material dielectric = Material(vec3(0), 0.0, 1.5, mat_dielectric);
+Material lambert    = Material(vec3(0.8, 0.8, 0.0), 0.0, 0.0, mat_lambert);
+
+Primitive primitive_from_buffer(uint idx) {
+    return Primitive(primitives[3 * idx + 0], primitives[3 * idx + 1], primitives[3 * idx + 2]);
+}
+
+Sphere sphere_from_primitive(in Primitive p) {
+    vec3 center = p.data1.xyz;
+    float radius = p.data1.w;
+    return Sphere(center, radius);
+}
+
+Triangle triangle_from_primitive(in Primitive p) {
+    vec3 v0 = p.data0.xyz;
+    vec3 v1 = p.data1.xyz;
+    vec3 v2 = p.data2.xyz;
+    return Triangle(v0, v1 - v0, v2 - v0);
+}
+
+Cube cube_from_primitive(in Primitive p) {
+    vec3 min = p.data0.xyz;
+    vec3 max = p.data1.xyz;
+    return Cube(min, max);
+}
+
+Material material_from_buffer(uint idx) {
+    vec4 data1 = materials[idx * 2];
+    vec4 data2 = materials[idx * 2 + 1];
+
+    vec3 albedo = data1.xyz;
+    float fuzz = data1.w;
+    float ref_idx = data2.x;
+
+//    uint scatter_function = floatBitsToUint(data2.w);
+    uint scatter_function = uint(data2.w);
+
+    if (scatter_function < 1 || scatter_function > 3) {
+        scatter_function = 1;
+        albedo = vec3(0);
+    }
+
+    return Material(albedo, fuzz, ref_idx, scatter_function);
+}
+
+Object object_from_buffer(uint idx) {
+    uvec2 data = objects[idx];
+    uint primitiveId = data.x;
+    uint materialId = data.y;
+
+    return Object(primitive_from_buffer(primitiveId), material_from_buffer(materialId));
+}
+
+bool lambertian_scatter(in Material mat, in Ray r, in HitRecord hit, out vec3 attenuation, out Ray scattered) {
+    vec3 target = hit.p + hit.normal + random_in_unit_sphere(hit.p);
+    scattered = Ray(hit.p, target - hit.p);
+    attenuation = mat.albedo;
+    return true;
+}
+
+bool metal_scatter(in Material mat, in Ray r, in HitRecord hit, out vec3 attenuation, out Ray scattered) {
+    vec3 reflected = reflect(normalize(r.direction), hit.normal);
+    scattered = Ray(hit.p, reflected + mat.fuzz * random_in_unit_sphere(hit.p));
+    attenuation = mat.albedo;
+    return (dot(scattered.direction, hit.normal) > 0);
+}
+
+bool dielectric_scatter(in Material mat, in Ray r, in HitRecord hit, out vec3 attenuation, out Ray scattered) {
+    vec3 outward_normal;
+    vec3 reflected = reflect(r.direction, hit.normal);
+    float ni_over_nt;
+    attenuation = vec3(1.0, 1.0, 1.0);
+    vec3 refracted;
+    float reflect_prob;
+    float cosine;
+    if (dot(r.direction, hit.normal) > 0) {
+        outward_normal = - hit.normal;
+        ni_over_nt = mat.ref_idx;
+        cosine = mat.ref_idx * dot(r.direction, hit.normal) / length(r.direction);
+    } else {
+        outward_normal = hit.normal;
+        ni_over_nt = 1.0 / mat.ref_idx;
+        cosine = - dot(r.direction, hit.normal) / length(r.direction);
+    }
+    if (refract(r.direction, outward_normal, ni_over_nt, refracted)) {
+        reflect_prob = schlick(cosine, mat.ref_idx);
+    } else {
+        reflect_prob = 1.0;
+    }
+
+    if (drand48(r.direction.xy) < reflect_prob) {
+        scattered = Ray(hit.p, reflected);
+    } else {
+        scattered = Ray(hit.p, refracted);
+    }
+    return true;
+}
+
+bool dispatch_scatter(in Ray r, HitRecord hit, out vec3 attenuation, out Ray scattered) {
+    if (hit.mat.scatter_function == mat_dielectric) {
+        return dielectric_scatter(hit.mat, r, hit, attenuation, scattered);
+    } else if (hit.mat.scatter_function == mat_metal) {
+        return metal_scatter(hit.mat, r, hit, attenuation, scattered);
+    } else {
+        return lambertian_scatter(hit.mat, r, hit, attenuation, scattered);
+    }
+}
+
+bool sphere_hit(in Sphere sp, in Material material, in Ray r, float t_min, float t_max, out HitRecord hit) {
+    vec3 oc = r.origin - sp.center;
+    float a = dot(r.direction, r.direction);
+    float b = dot(oc, r.direction);
+    float c = dot(oc, oc) - sp.radius * sp.radius;
+    float discriminant = b*b - a*c;
+    if (discriminant > 0) {
+        float temp = (-b - sqrt(b*b-a*c)) /a;
+        if (temp < t_max && temp > t_min) {
+            hit.t = temp;
+            hit.p = point_at_parameter(r, hit.t);
+            hit.normal = (hit.p - sp.center) / sp.radius;
+            hit.mat = material;
+            return true;
+        }
+        temp = (-b + sqrt(b*b-a*c)) /a;
+        if (temp < t_max && temp > t_min) {
+            hit.t = temp;
+            hit.p = point_at_parameter(r, hit.t);
+            hit.normal = (hit.p - sp.center) / sp.radius;
+            hit.mat = material;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ray_triangle_intersection(in Ray ray, in Triangle triangle, out float t) {
+    vec3 e1 = triangle.e0;
+    vec3 e2 = triangle.e1;
+
+    vec3 pvec = cross(ray.direction, e2);
+    float det = dot(e1, pvec);
+
+    if (abs(det) < 1e-5) {
+        return false;
+    }
+
+    float inv_det = 1. / det;
+    vec3 tvec = ray.origin - triangle.v0;
+    float u = dot(tvec, pvec) * inv_det;
+    if (u < 0. || u > 1.) {
+        return false;
+    }
+
+    vec3 qvec = cross(tvec, e1);
+    float v = dot(ray.direction, qvec) * inv_det;
+    if (v < 0. || u + v > 1.) {
+        return false;
+    }
+
+    t = dot(e2, qvec) * inv_det;
+    return true;
+}
+
+bool triangle_hit(in Triangle triangle, in Material material, in Ray ray, float t_min, float t_max, out HitRecord hit) {
+    float t;
+    if (ray_triangle_intersection(ray, triangle, t)) {
+        if (t_min < t && t < t_max) {
+            hit.t = t;
+            hit.normal = cross(triangle.e0, triangle.e1);
+            hit.p = point_at_parameter(ray, hit.t);
+            hit.mat = material;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+vec3 aabb_noraml_at(Cube aabb, vec3 point) {
+    const float BIAS = 1. - 8. * 0.0000001;
+
+    vec3 center = (aabb.max + aabb.min) / 2;
+    vec3 size = aabb.max - aabb.min;
+
+    vec3 local_point = point - center;
+    vec3 hsize = size / 2;
+
+    vec3 d = local_point / hsize;
+
+    vec3 res;
+    if (abs(d.x) > BIAS) {
+        res = sign(d.x) * vec3(1, 0, 0);
+    } else if (abs(d.y) > BIAS) {
+        res = sign(d.y) * vec3(0, 1, 0);
+    } else {
+        res = sign(d.z) * vec3(0, 0, 1);
+    }
+
+    return res;
+}
+
+bool intersectRayBox(in Ray r, vec3 invdir, vec3 pmin, vec3 pmax, out float tMin, out float tMax) {
+    const vec3 f = (pmax.xyz - r.origin.xyz) * invdir;
+    const vec3 n = (pmin.xyz - r.origin.xyz) * invdir;
+
+    const vec3 tmax = max(f, n);
+    const vec3 tmin = min(f, n);
+
+    const float t1 = min(tmax.x, min(tmax.y, tmax.z));
+    const float t0 = max(max(tmin.x, max(tmin.y, tmin.z)), 0.0f);
+
+    tMin = t0;
+    tMax = t1;
+
+    return t1 >= t0;
+}
+
+bool cube_hit(in Cube cube, in Material material, in Ray ray, float t_min, float t_max, out HitRecord hit) {
+    vec3 invDir = 1. / ray.direction;
+
+    float tMin, tMax;
+
+    if (intersectRayBox(ray, invDir, cube.min, cube.max, tMin, tMax)) {
+        if (t_min < tMin && tMin < t_max) {
+            hit.t = tMin;
+        } else if (t_min < tMax && tMax < t_max) {
+            hit.t = tMax;
+        } else {
+            return false;
+        }
+
+        hit.p = point_at_parameter(ray, hit.t);
+        hit.normal = aabb_noraml_at(cube, hit.p);
+        hit.mat = material;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool world_hit(in Ray r, float t_min, float t_max, out HitRecord hit) {
+    HitRecord temp_hit;
+    bool hit_anything = false;
+    float closest_so_far = t_max;
+
+    for (int i = 0; i < push_constant.objects_count; i++) {
+        Object o = object_from_buffer(i);
+
+        Primitive p = o.primitive;
+
+        if (primitive_type(p) == PRIMITIVE_SPHERE) {
+            Sphere sphere = sphere_from_primitive(p);
+            if (sphere_hit(sphere, o.material, r, t_min, closest_so_far, temp_hit)) {
+                hit_anything = true;
+                hit = temp_hit;
+                closest_so_far = temp_hit.t;
+            }
+        } else if (primitive_type(p) == PRIMITIVE_TRIANGLE) {
+            Triangle triangle = triangle_from_primitive(p);
+            if (triangle_hit(triangle, o.material, r, t_min, closest_so_far, temp_hit)) {
+                hit_anything = true;
+                hit = temp_hit;
+                closest_so_far = temp_hit.t;
+            }
+        } else if (primitive_type(p) == PRIMITIVE_CUBE) {
+            Cube cube = cube_from_primitive(p);
+            if (cube_hit(cube, o.material, r, t_min, closest_so_far, temp_hit)) {
+                hit_anything = true;
+                hit = temp_hit;
+                closest_so_far = temp_hit.t;
+            }
+        }
+    }
+
+    return hit_anything;
+}
+
+vec3 color(Ray r) {
+    HitRecord hit;
+    vec3 col = vec3(0, 0, 0); /* visible color */
+    vec3 total_attenuation = vec3(1.0, 1.0, 1.0); /* reduction of light transmission */
+
+    for (int bounce = 0; bounce < 16; bounce++) {
+
+        if (world_hit(r, 0.0001, 1.0 / 0.0, hit)) {
+            /* create a new reflected ray */
+            Ray scattered;
+            vec3 local_attenuation;
+
+            if (dispatch_scatter(r, hit, local_attenuation, scattered)) {
+                total_attenuation *= local_attenuation;
+                r = scattered;
+            } else {
+                total_attenuation *= vec3(0, 0, 0);
+            }
+        } else {
+            /* background hit (light source) */
+            vec3 unit_dir = normalize(r.direction);
+            float t = 0.5 * (unit_dir.y + 1.0);
+            col = total_attenuation * ((1.0-t)*vec3(1.0, 1.0, 1.0)+t*vec3(0.5, 0.7, 1.0));
+            break;
+        }
+    }
+    return col;
+}
+
+void main() {
+    vec2 norm_coordinates = (gl_GlobalInvocationID.xy + vec2(0.5)) / vec2(imageSize(img));
+
+    vec3 col = vec3(0, 0, 0);
+    const int nsamples = 4;
+    for (int s = 0; s < nsamples; s++) {
+        // TODO: triming
+        vec2 uv = norm_coordinates + vec2(drand48(col.xy + s), drand48(col.xy + s + 1)) / vec2(imageSize(img) * 8);
+//        vec2 uv = norm_coordinates;
+
+        Ray r = get_ray(uv.x, uv.y);
+        col += color(r);
+    }
+    col /= nsamples;
+
+    col = vec3(sqrt(col.x), sqrt(col.y), sqrt(col.z));
+
+    vec4 to_write = vec4(col, 1.0);
+    imageStore(img, ivec2(gl_GlobalInvocationID.xy), to_write);
+}
