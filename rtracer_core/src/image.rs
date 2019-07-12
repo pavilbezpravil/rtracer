@@ -1,43 +1,27 @@
 use std::ops::{Index, IndexMut};
 use std::io::Write;
 
-use crate::vec3::Vec3;
+use crate::Vec3;
 
 pub type ColorRGB = Vec3;
 
-impl ColorRGB {
-    pub fn from_rgb(r: f32, g: f32, b: f32) -> ColorRGB {
-        ColorRGB::new(r, g, b)
-    }
 
-    pub fn r(&self) -> f32 {
-        self.x()
-    }
+fn to_u8(color: &Vec3) -> (u8, u8, u8) {
+    debug_assert!(color.x >= 0f32 && color.x <= 1f32);
+    debug_assert!(color.y >= 0f32 && color.y <= 1f32);
+    debug_assert!(color.z >= 0f32 && color.z <= 1f32);
 
-    pub fn g(&self) -> f32 {
-        self.y()
-    }
-
-    pub fn b(&self) -> f32 {
-        self.z()
-    }
-
-    pub fn to_u8(&self) -> (u8, u8, u8) {
-        debug_assert!(self.r() >= 0f32 && self.r() <= 1f32);
-        debug_assert!(self.g() >= 0f32 && self.g() <= 1f32);
-        debug_assert!(self.b() >= 0f32 && self.b() <= 1f32);
-
-        ((self.r() * 255.99f32) as u8,
-         (self.g() * 255.99f32) as u8,
-         (self.b() * 255.99f32) as u8)
-    }
-
-    pub fn gamma_correction(&self, gamma: f32) -> Vec3 {
-        Vec3::new(self.x().powf(1. / gamma),
-                  self.y().powf(1. / gamma),
-                  self.z().powf(1. / gamma))
-    }
+    ((color.x * 255.99f32) as u8,
+     (color.y * 255.99f32) as u8,
+     (color.z * 255.99f32) as u8)
 }
+
+pub fn gamma_correction(color: &Vec3, gamma: f32) -> Vec3 {
+    Vec3::new(color.x.powf(1. / gamma),
+              color.y.powf(1. / gamma),
+              color.z.powf(1. / gamma))
+}
+
 
 pub struct Image {
     width: u32,
@@ -73,15 +57,15 @@ impl Image {
         writeln!(file, "{} {}", self.width, self.height)?;
         writeln!(file, "255")?;
         for pixel in &self.img {
-            let (r, g, b) = pixel.to_u8();
+            let (r, g, b) = to_u8(&pixel);
             writeln!(file, "{} {} {}", r, g, b)?;
         }
         Ok(())
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &ColorRGB> {
-        self.img.iter()
-    }
+//    pub fn iter(&self) -> impl Iterator<Item = &ColorRGB> {
+//        self.img.iter()
+//    }
 }
 
 impl Index<(u32, u32)> for Image {

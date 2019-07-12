@@ -65,10 +65,10 @@ impl Renderer {
         let raycast_camera = RaycastCamera::from_camera(camera);
 
         let camera_push_constant = cs::ty::PushConstant {
-            origin: raycast_camera.origin.as_array(),
-            upper_left: raycast_camera.upper_left.as_array(),
-            horizontal: raycast_camera.horizontal.as_array(),
-            vertical: raycast_camera.vertical.as_array(),
+            origin: raycast_camera.origin.into(),
+            upper_left: raycast_camera.upper_left.into(),
+            horizontal: raycast_camera.horizontal.into(),
+            vertical: raycast_camera.vertical.into(),
             seed: rand::thread_rng().gen(),
             objects_count: self.scene.objects_count() as u32,
             _dummy0: [1, 1, 1, 1],

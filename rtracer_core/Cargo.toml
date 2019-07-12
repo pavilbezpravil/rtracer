@@ -8,3 +8,7 @@ edition = "2018"
 serde = { version = "*", features = ["derive", "rc"] }
 serde_json = "*"
 approx = "*"
+
+winit = "0.19"
+
+nalgebra = "*"

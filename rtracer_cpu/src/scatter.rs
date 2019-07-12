@@ -50,9 +50,9 @@ impl Scatter for Metal {
 impl Scatter for Dielectric {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<ScatteredRay> {
         let (outward_normal, ni_over_nt, cosin) = if Vec3::dot(&ray.direction, &hit.normal) > 0. {
-            (-hit.normal, self.ref_idx, self.ref_idx * Vec3::dot(&ray.direction, &hit.normal) / ray.direction.length())
+            (-hit.normal, self.ref_idx, self.ref_idx * Vec3::dot(&ray.direction, &hit.normal) / ray.direction.norm())
         } else {
-            (hit.normal, 1. / self.ref_idx, -Vec3::dot(&ray.direction, &hit.normal) / ray.direction.length())
+            (hit.normal, 1. / self.ref_idx, -Vec3::dot(&ray.direction, &hit.normal) / ray.direction.norm())
         };
 
         let reflected = reflect(&ray.direction, &hit.normal);
@@ -83,9 +83,9 @@ fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
 }
 
 fn refract(v: &Vec3, n: &Vec3, n_ref: f32) -> Option<Vec3> {
-    debug_assert!(relative_eq!(n.squared_length(), 1., epsilon = std::f32::EPSILON *  4.));
+    debug_assert!(relative_eq!(n.norm_squared(), 1., epsilon = std::f32::EPSILON *  4.));
 
-    let uv = v.make_unit();
+    let uv = v.normalize();
     let cos_in = Vec3::dot(&uv, n);
     let cos2_out = 1. - n_ref * n_ref * (1. - cos_in * cos_in);
     if cos2_out > 0. {

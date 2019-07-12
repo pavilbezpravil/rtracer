@@ -16,7 +16,7 @@ fn main() {
 
     let mut test_bed = Testbed::new();
 
-    let camera = RefCell::new(Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32));
+    let camera = RefCell::new(Camera::new(Vec3::z(), -Vec3::z(), Vec3::y(), 90., width as f32 / height as f32));
 
     let mut frame_counter = FrameCounter::new();
 
@@ -42,7 +42,7 @@ fn main() {
             Event::WindowEvent { event: WindowEvent::KeyboardInput { input, .. }, .. } => {
                 if input.state == ElementState::Pressed {
                     if let Some(key) = input.virtual_keycode {
-                        let mut dir = Vec3::origin();
+                        let mut dir = Vec3::zeros();
                         let mut camera = camera.borrow_mut();
                         match key {
                             VirtualKeyCode::W => {
@@ -60,10 +60,12 @@ fn main() {
                             _ => {},
                         };
 
-                        if let Some(dir) = dir.try_make_unit() {
-                            let dt = 1. / 60.;
-                            camera.translate(&(dir * dt));
-                        }
+
+//                        na::Uni
+//                        if let Some(dir) = dir.normalize() {
+//                            let dt = 1. / 60.;
+//                            camera.translate(&(dir * dt));
+//                        }
                     }
                 }
             },

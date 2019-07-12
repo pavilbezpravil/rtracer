@@ -1,5 +1,5 @@
 pub use crate::{
-    vec3::Vec3,
+    Vec3,
     ray::Ray,
     aabb::Aabb,
     sphere::Sphere,

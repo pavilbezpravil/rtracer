@@ -1,5 +1,3 @@
-#![feature(duration_float)]
-
 pub mod renderer;
 pub mod frame_counter;
 pub mod testbed;

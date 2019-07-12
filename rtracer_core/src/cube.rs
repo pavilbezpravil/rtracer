@@ -1,5 +1,5 @@
 use crate::aabb::Aabb;
-use crate::vec3::Vec3;
+use crate::Vec3;
 use crate::intersect::Intersect;
 use crate::ray::Ray;
 

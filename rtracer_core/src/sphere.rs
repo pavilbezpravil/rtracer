@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use crate::Vec3;
 use crate::ray::Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
@@ -16,7 +16,7 @@ impl Sphere {
     }
 
     pub fn normal_at(&self, point: &Vec3) -> Vec3 {
-        (*point - self.center).make_unit()
+        (*point - self.center).normalize()
     }
 }
 
@@ -32,6 +32,6 @@ impl Intersect for Sphere {
     }
 
     fn aabb(&self) -> Aabb {
-        Aabb::from_center_size(self.center, Vec3::from_value(self.radius * 2.))
+        Aabb::from_center_size(self.center, Vec3::from_element(self.radius * 2.))
     }
 }

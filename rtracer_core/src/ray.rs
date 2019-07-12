@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use crate::Vec3;
 
 #[derive(Copy, Clone)]
 pub struct Ray {
@@ -8,7 +8,7 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Vec3, direction: Vec3) -> Ray {
-        Ray { origin, direction: direction.make_unit() }
+        Ray { origin, direction: direction.normalize() }
     }
 
     pub fn point_at_parameter(&self, t: f32) -> Vec3 {

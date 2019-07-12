@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use crate::Vec3;
 use crate::ray::Ray;
 use crate::intersect::Intersect;
 use crate::intersection::ray_aabb_intersection;
@@ -24,7 +24,7 @@ impl Aabb {
     pub fn empty() -> Aabb {
         let min = std::f32::MIN;
         let max = std::f32::MAX;
-        Aabb::new(Vec3::from_value(max), Vec3::from_value(min))
+        Aabb::new(Vec3::from_element(max), Vec3::from_element(min))
     }
 
     pub fn center(&self) -> Vec3 {
@@ -46,13 +46,13 @@ impl Aabb {
     pub fn union(a: &Aabb, b: &Aabb) -> Aabb {
         Aabb {
             min: Vec3::new(
-            a.min.x().min(b.min.x()),
-            a.min.y().min(b.min.y()),
-            a.min.z().min(b.min.z())),
+            a.min.x.min(b.min.x),
+            a.min.y.min(b.min.y),
+            a.min.z.min(b.min.z)),
             max: Vec3::new(
-                a.max.x().max(b.max.x()),
-                a.max.y().max(b.max.y()),
-                a.max.z().max(b.max.z()))
+                a.max.x.max(b.max.x),
+                a.max.y.max(b.max.y),
+                a.max.z.max(b.max.z))
         }
     }
 }
@@ -63,16 +63,16 @@ fn aabb_noraml_at(aabb: &Aabb, point: &Vec3) -> Vec3 {
     let local_point = *point - aabb.center();
     let hsize = aabb.size() / 2.;
 
-    let d = Vec3::new(local_point.x() / hsize.x(),
-                      local_point.y() / hsize.y(),
-                      local_point.z() / hsize.z());
+    let d = Vec3::new(local_point.x / hsize.x,
+                      local_point.y / hsize.y,
+                      local_point.z / hsize.z);
 
-    if d.x().abs() > BIAS {
-        d.x().signum() * Vec3::new_x()
-    } else if d.y().abs() > BIAS {
-        d.y().signum() * Vec3::new_y()
+    if d.x.abs() > BIAS {
+        d.x.signum() * Vec3::x()
+    } else if d.y.abs() > BIAS {
+        d.y.signum() * Vec3::y()
     } else {
-        d.z().signum() * Vec3::new_z()
+        d.z.signum() * Vec3::z()
     }
 }
 

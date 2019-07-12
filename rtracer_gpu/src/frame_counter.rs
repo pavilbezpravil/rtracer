@@ -20,7 +20,7 @@ impl FrameCounter {
         self.total_frame += 1;
         self.cur_fps_count += 1;
 
-        let elapsed = self.last_fps_update.unwrap().elapsed().as_secs_f32();
+        let elapsed = (self.last_fps_update.unwrap().elapsed().as_millis() / 1000) as f32;
         if elapsed > 1. {
             self.fps = self.cur_fps_count as f32 / elapsed;
 

@@ -4,7 +4,7 @@ use std::mem::swap;
 pub fn ray_sphere_intersection(ray: &Ray, sphere: &Sphere) -> Option<f32> {
     let oc = ray.origin - sphere.center;
 
-    let a = ray.direction.squared_length();
+    let a = ray.direction.norm_squared();
     let b = Vec3::dot(&ray.direction, &oc);
     let c = Vec3::dot(&oc, &oc) - sphere.radius * sphere.radius;
 
@@ -132,7 +132,7 @@ fn moller_trumbore_algorithm(ray: &Ray, triangle: &Triangle) -> Option<f32> {
 pub fn ray_disk_intersection(ray: &Ray, disk: &Disk) -> Option<f32> {
     if let Some(t) = ray_plane_intersection(ray, &disk.plane) {
         let point = ray.point_at_parameter(t);
-        if (point - disk.plane.origin).squared_length() < disk.radius * disk.radius {
+        if (point - disk.plane.origin).norm_squared() < disk.radius * disk.radius {
             return Some(t)
         }
     }

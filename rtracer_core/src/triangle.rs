@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use crate::Vec3;
 use crate::ray::Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
@@ -17,7 +17,7 @@ impl Triangle {
     }
 
     pub fn normal(&self) -> Vec3 {
-        (self.v1 - self.v0).cross(&(self.v2 - self.v0)).make_unit()
+        (self.v1 - self.v0).cross(&(self.v2 - self.v0)).normalize()
     }
 }
 

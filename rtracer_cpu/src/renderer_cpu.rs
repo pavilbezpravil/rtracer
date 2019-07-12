@@ -6,7 +6,7 @@ use itertools::iproduct;
 
 use crate::hitable_list::HitableList;
 use crate::hit::Hit;
-use rtracer_core::image::{Image, ColorRGB};
+use rtracer_core::image::{Image, ColorRGB, gamma_correction};
 use rtracer_core::prelude::{Vec3, Ray, Camera, RaycastCamera};
 use crate::scatter::Scatter;
 
@@ -29,7 +29,7 @@ impl CPURenderer {
             .zip(image.buf_mut().iter_mut())
             .par_bridge()
             .for_each(|((y, x), pixel)| {
-                let mut total_color = ColorRGB::origin();
+                let mut total_color = ColorRGB::zeros();
 
                 for _ in 0..self.rays_for_pixel {
                     let (u, v) = ((x as f32 + rand::random::<f32>()) / width as f32,
@@ -39,7 +39,7 @@ impl CPURenderer {
                     total_color += self.color(&ray, 0, scene);
                 }
                 total_color /= self.rays_for_pixel as f32;
-                total_color = total_color.gamma_correction(2f32);
+                total_color = gamma_correction(&total_color, 2f32);
 
                 *pixel = total_color;
             });
@@ -49,15 +49,26 @@ impl CPURenderer {
         if let Some(rec) = scene.hit(ray, (0., std::f32::MAX)) {
             if let Some(scattered) = rec.material.scatter(ray, &rec) {
                 if depth < self.max_ray_depth {
-                    return scattered.attenuation * self.color(&scattered.ray, depth + 1, scene);
+                    let attenuation: Vec3 = scattered.attenuation;
+                    let color: Vec3 = self.color(&scattered.ray, depth + 1, scene);
+
+                    let res = Vec3::new(
+                        attenuation.x * color.x,
+                        attenuation.y * color.y,
+                        attenuation.z * color.z,
+                    );
+
+                    return res;
+                    // !todo:
+//                    return scattered.attenuation * self.color(&scattered.ray, depth + 1, scene);
                 }
             }
-            Vec3::origin()
+            Vec3::zeros()
         } else {
 //            let unit_direction = ray.direction.make_unit();
 //            let t = 0.5f32 * (unit_direction.y() + 1f32);
 //            (1f32 - t) * Vec3::new(1f32, 1f32, 1f32) + t * Vec3::new(0.5f32, 0.7f32, 1f32)
-            Vec3::unit()
+            Vec3::identity()
         }
     }
 }

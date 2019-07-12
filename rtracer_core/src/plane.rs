@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use crate::Vec3;
 use crate::ray::Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
@@ -12,7 +12,7 @@ pub struct Plane {
 
 impl Plane {
     pub fn new(origin: Vec3, normal: Vec3) -> Plane {
-        debug_assert!(relative_eq!(normal.squared_length(), 1., epsilon = std::f32::EPSILON *  4.));
+        debug_assert!(relative_eq!(normal.norm_squared(), 1., epsilon = std::f32::EPSILON *  4.));
         Plane { origin, normal }
     }
 }
