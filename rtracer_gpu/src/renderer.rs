@@ -133,6 +133,9 @@ fn primitive_to_gpu(primitive: &Primitive) -> [f32; 4] {
         Primitive::Sphere(s) => {
             sphere_to_gpu(s)
         },
+//        Primitive::Cube(c) => {
+//            cube_to_gpu(c)
+//        },
         _ => panic!("unsupported primitive")
     }
 }
@@ -140,6 +143,10 @@ fn primitive_to_gpu(primitive: &Primitive) -> [f32; 4] {
 fn sphere_to_gpu(s: &Sphere) -> [f32; 4] {
     [s.center[0], s.center[1], s.center[2], s.radius]
 }
+
+//fn cube_to_gpu(c: &Cube) -> [f32; 4] {
+//    [s.center[0], s.center[1], s.center[2], s.radius]
+//}
 
 fn materials_to_gpu_buf<'a>(ms: impl ExactSizeIterator<Item=(&'a MaterialId, &'a Material)>) -> Vec<[f32; 8]> {
     // !todo: tmp
