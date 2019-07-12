@@ -25,17 +25,16 @@ pub struct Renderer {
     device: Arc<Device>,
     queue: Arc<Queue>,
     compute_pipeline: Arc<dyn ComputePipelineAbstract + Send + Sync>,
-    scene: SceneData,
 }
 
 impl Renderer {
-    pub fn new(device: Arc<Device>, queue: Arc<Queue>, scene: SceneData) -> Renderer {
+    pub fn new(device: Arc<Device>, queue: Arc<Queue>) -> Renderer {
         let compute_pipeline = Arc::new({
             let shader = cs::Shader::load(device.clone()).unwrap();
             ComputePipeline::new(device.clone(), &shader.main_entry_point(), &()).unwrap()
         });
 
-        Renderer { device, queue, compute_pipeline, scene }
+        Renderer { device, queue, compute_pipeline }
     }
 
     pub fn create_texture(device: Arc<Device>, queue: Arc<Queue>, (width, height): (u32, u32)) -> Arc<dyn ImageViewAccess + Sync + Send> {
@@ -43,20 +42,20 @@ impl Renderer {
                           Format::R8G8B8A8Unorm, Some(queue.family())).unwrap()
     }
 
-    pub fn render(&self, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>, future: Box<GpuFuture>) -> Box<GpuFuture>
+    pub fn render(&self, scene: &SceneData, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>, future: Box<GpuFuture>) -> Box<GpuFuture>
     {
         let primitives_buffer = {
-            let buf = primitives_to_gpu_buf(self.scene.primitives_iter());
+            let buf = primitives_to_gpu_buf(scene.primitives_iter());
             CpuAccessibleBuffer::from_iter(self.device.clone(), BufferUsage::all(), buf.iter().cloned()).unwrap()
         };
 
         let materials_buffer = {
-            let buf = materials_to_gpu_buf(self.scene.materials_iter());
+            let buf = materials_to_gpu_buf(scene.materials_iter());
             CpuAccessibleBuffer::from_iter(self.device.clone(), BufferUsage::all(), buf.iter().cloned()).unwrap()
         };
 
         let objects_buffer = {
-            let buf = objects_to_gpu_buf(self.scene.objects_iter());
+            let buf = objects_to_gpu_buf(scene.objects_iter());
             CpuAccessibleBuffer::from_iter(self.device.clone(), BufferUsage::all(), buf.iter().cloned()).unwrap()
         };
 
@@ -76,7 +75,7 @@ impl Renderer {
             horizontal: raycast_camera.horizontal.into(),
             vertical: raycast_camera.vertical.into(),
             seed: rand::thread_rng().gen(),
-            objects_count: self.scene.objects_count() as u32,
+            objects_count: scene.objects_count() as u32,
             _dummy0: [1, 1, 1, 1],
             _dummy1: [1, 1, 1, 1],
             _dummy2: [1, 1, 1, 1],

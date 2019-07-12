@@ -41,7 +41,7 @@ fn main() {
 
     let scene = create_scene();
 
-    let renderer = Renderer::new(testbed.device.clone(), testbed.queue.clone(), scene);
+    let renderer = Renderer::new(testbed.device.clone(), testbed.queue.clone());
 
     let mut prev_frame_future = Box::new(vulkano::sync::now(device.clone())) as Box<dyn GpuFuture>;
 
@@ -50,7 +50,7 @@ fn main() {
     while !testbed.should_close() {
         prev_frame_future = testbed.prepare_frame(prev_frame_future).unwrap();
 
-        let future = renderer.render(&camera, texture.clone(), prev_frame_future);
+        let future = renderer.render(&scene, &camera, texture.clone(), prev_frame_future);
 
         prev_frame_future = testbed.render(future, texture.clone());
 
