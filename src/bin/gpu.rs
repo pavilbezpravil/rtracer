@@ -21,6 +21,9 @@ fn create_scene() -> SceneData {
     scene.create_object(Sphere::new(Vec3::new(0., -100.5, -1.), 100.).into(),
                         Lambertian::new(Vec3::new(0.1, 0.8, 0.3)).into());
 
+//    scene.create_object(Cube::new(Vec3::new(0., 0., 0.), Vec3::new(2., 2., 2.)).into(),
+//                        Lambertian::new(Vec3::new(0.1, 0.8, 0.3)).into());
+
     scene
 }
 

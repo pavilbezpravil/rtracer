@@ -1,5 +1,3 @@
-#![feature(duration_float)]
-
 extern crate rand;
 
 extern crate rtracer_core;
@@ -41,20 +39,20 @@ fn test_scene_dielectric((width, height): (u32, u32)) -> (HitableList<Object>, C
                                  Material::Lambertian(Lambertian::new(Vec3::new(0.8, 0.3, 0.3)))));
     // left
     scene.add(Object::new_sphere(Sphere::new(Vec3::new(-dist, 0f32, z), 0.5f32),
-                                 Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5))));
+                                 Material::Dielectric(Dielectric::new(Vec3::identity(), 1.5))));
     scene.add(Object::new_sphere(Sphere::new(Vec3::new(-dist, 0f32, z), -0.45f32),
-                                 Material::Dielectric(Dielectric::new(Vec3::unit(), 1.5))));
+                                 Material::Dielectric(Dielectric::new(Vec3::identity(), 1.5))));
 
     // flor
-    scene.add(Object::new_plane(Plane::new(-1. * Vec3::new_y(), Vec3::new_y()),
+    scene.add(Object::new_plane(Plane::new(-1. * Vec3::y(), Vec3::y()),
                                 Material::Lambertian(Lambertian::new(Vec3::new(0.0, 0.6, 0.0)))));
 //                                               Arc::new(Material::Metal(Metal::new(Vec3::new(0.0, 0.6, 0.0), 0.)))))));
 
     // big cube
-    scene.add(Object::new_cube(Cube::new(Vec3::new(4.0, 0., 0.), 4. * Vec3::unit()),
+    scene.add(Object::new_cube(Cube::new(Vec3::new(4.0, 0., 0.), 4. * Vec3::identity()),
                                Material::Metal(Metal::new(Vec3::new(0.37, 0.15, 0.02), 0.))));
 
-    let camera = Camera::new(Vec3::new(-2., 0.75, 0.25), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+    let camera = Camera::new(Vec3::new(-2., 0.75, 0.25), -Vec3::z(), Vec3::y(), 90., width as f32 / height as f32);
 
     (scene, camera)
 }
@@ -67,7 +65,7 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (HitableList<Object>, Cam
     scene.add(Object::new_triangle(Triangle::new(size * Vec3::new(-1.0, 0., 0.), size * Vec3::new(1., 0., 0.), size * Vec3::new(0., 1., 0.)),
                                    Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
 
-    let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+    let camera = Camera::new(Vec3::z(), -Vec3::z(), Vec3::y(), 90., width as f32 / height as f32);
 
     (scene, camera)
 }
@@ -75,10 +73,10 @@ fn test_scene_triangle((width, height): (u32, u32)) -> (HitableList<Object>, Cam
 fn test_scene_disk((width, height): (u32, u32)) -> (HitableList<Object>, Camera) {
     let mut scene = HitableList::new();
 
-    scene.add(Object::new_disk(Disk::new(Plane::new(-Vec3::new_z(), Vec3::new_z()), 1.),
+    scene.add(Object::new_disk(Disk::new(Plane::new(-Vec3::z(), Vec3::z()), 1.),
                                Material::Lambertian(Lambertian::new(Vec3::new(0.37, 0.9, 0.02)))));
 
-    let camera = Camera::new(Vec3::new_z(), -Vec3::new_z(), Vec3::new_y(), 90., width as f32 / height as f32);
+    let camera = Camera::new(Vec3::z(), -Vec3::z(), Vec3::y(), 90., width as f32 / height as f32);
 
     (scene, camera)
 }
@@ -140,7 +138,7 @@ fn test_scene_with_random_spheres_bvh((width, height): (u32, u32), n: usize, siz
     use std::time::Instant;
     let start = Instant::now();
     let bvh = BvhNode::build(gen_spheres_in_cube(n, size).as_mut_slice());
-    println!("bhv construct: {} sec", start.elapsed().as_secs_f32());
+    println!("bhv construct: {} sec", start.elapsed().as_micros() as f64 / 1_000_000.);
 
     bvh
 }
@@ -155,7 +153,7 @@ fn run() {
 
     let n = 5;
     let size = 20f32;
-    let camera = Camera::new(Vec3::new(1., size / 1.5, -1.), Vec3::new(size / 2., 0., size / 2.), Vec3::new_y(), 90., width as f32 / height as f32);
+    let camera = Camera::new(Vec3::new(1., size / 1.5, -1.), Vec3::new(size / 2., 0., size / 2.), Vec3::y(), 90., width as f32 / height as f32);
 //    let scene = test_scene_with_random_spheres((width, height), n, size);
     let scene = test_scene_with_random_spheres_bvh((width, height), n, size);
 //    let (scene, camera) = test_scene_dielectric((width, height));
