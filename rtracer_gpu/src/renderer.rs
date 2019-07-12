@@ -5,7 +5,8 @@ use vulkano::pipeline::{ComputePipeline, ComputePipelineAbstract};
 use vulkano::command_buffer::AutoCommandBufferBuilder;
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
 use vulkano::sync::GpuFuture;
-use vulkano::image::traits::ImageViewAccess;
+use vulkano::image::{ImageViewAccess, StorageImage, Dimensions};
+use vulkano::format::Format;
 
 use rtracer_core::prelude::*;
 use rand::Rng;
@@ -35,6 +36,11 @@ impl Renderer {
         });
 
         Renderer { device, queue, compute_pipeline, scene }
+    }
+
+    pub fn create_texture(device: Arc<Device>, queue: Arc<Queue>, (width, height): (u32, u32)) -> Arc<dyn ImageViewAccess + Sync + Send> {
+        StorageImage::new(device, Dimensions::Dim2d { width, height },
+                          Format::R8G8B8A8Unorm, Some(queue.family())).unwrap()
     }
 
     pub fn render(&self, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>, future: Box<GpuFuture>) -> Box<GpuFuture>
