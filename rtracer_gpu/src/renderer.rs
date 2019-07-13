@@ -18,7 +18,8 @@ pub mod cs {
     vulkano_shaders::shader! {
                 ty: "compute",
 //                path: "src/shaders/spheres.comp",
-                path: "src/shaders/primitive.comp",
+//                path: "src/shaders/primitive.comp",
+                path: "src/shaders/primitive_bvh.comp",
     }
 }
 
@@ -43,7 +44,7 @@ impl Renderer {
                           Format::R8G8B8A8Unorm, Some(queue.family())).unwrap()
     }
 
-    pub fn render(&self, scene: &SceneData, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>, future: Box<GpuFuture>) -> Box<GpuFuture>
+    pub fn render(&self, scene: &SceneData, bvh_node_buffer: Arc<CpuAccessibleBuffer<[f32]>>, camera: &Camera, image: Arc<dyn ImageViewAccess + Send + Sync>, future: Box<GpuFuture>) -> Box<GpuFuture>
     {
         let primitives_buffer = {
             let buf = primitives_to_gpu_buf(scene.primitives_iter());
@@ -63,6 +64,7 @@ impl Renderer {
         let set = Arc::new(PersistentDescriptorSet::start(self.compute_pipeline.clone(), 0)
             .add_image(image.clone()).unwrap()
             .add_buffer(primitives_buffer).unwrap()
+            .add_buffer(bvh_node_buffer).unwrap()
             .add_buffer(materials_buffer).unwrap()
             .add_buffer(objects_buffer).unwrap()
             .build().unwrap()

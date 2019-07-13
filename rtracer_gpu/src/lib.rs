@@ -1,6 +1,7 @@
 pub mod renderer;
 pub mod frame_counter;
 pub mod testbed;
+pub mod bvh;
 
 #[cfg(test)]
 mod tests {

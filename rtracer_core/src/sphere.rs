@@ -3,6 +3,7 @@ use crate::ray::Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_sphere_intersection;
+use crate::bounded::Bounded;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Sphere {
@@ -30,7 +31,10 @@ impl Intersect for Sphere {
 
         None
     }
+}
 
+
+impl Bounded for Sphere {
     fn aabb(&self) -> Aabb {
         Aabb::from_center_size(self.center, Vec3::from_element(self.radius * 2.))
     }

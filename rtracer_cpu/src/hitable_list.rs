@@ -15,13 +15,13 @@ impl<H: Hit> HitableList<H> {
     }
 }
 
-impl<H: Hit> Default for HitableList<H> {
+impl<H: Hit + Bounded> Default for HitableList<H> {
     fn default() -> HitableList<H> {
         HitableList::new()
     }
 }
 
-impl<H: Hit> Hit for HitableList<H> {
+impl<H: Hit + Bounded> Hit for HitableList<H> {
     fn hit(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<HitRecord> {
         let mut ret = None;
 
@@ -40,7 +40,9 @@ impl<H: Hit> Hit for HitableList<H> {
 
         ret
     }
+}
 
+impl<H: Hit + Bounded> Bounded for HitableList<H> {
     fn aabb(&self) -> Aabb {
         self.hitable.iter().fold(Aabb::empty(), |mut aabb, hitable| { aabb.add_aabb(&hitable.aabb()); aabb })
     }

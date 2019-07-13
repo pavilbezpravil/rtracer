@@ -31,3 +31,9 @@ impl Object {
         Object::new(Primitive::Disk(disk), material)
     }
 }
+
+impl Bounded for Object {
+    fn aabb(&self) -> Aabb {
+        self.primitive.aabb()
+    }
+}

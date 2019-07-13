@@ -19,7 +19,9 @@ impl Intersect for Primitive {
             Primitive::Disk(s) => s.intersect(ray, t_min_max),
         }
     }
+}
 
+impl Bounded for Primitive {
     fn aabb(&self) -> Aabb {
         match self {
             Primitive::Plane(s) => s.aabb(),

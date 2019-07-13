@@ -3,6 +3,7 @@ use crate::ray::Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_triangle_intersection;
+use crate::bounded::Bounded;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle {
@@ -31,8 +32,15 @@ impl Intersect for Triangle {
 
         None
     }
+}
 
+impl Bounded for Triangle {
     fn aabb(&self) -> Aabb {
-        unimplemented!()
+        let mut aabb = Aabb::empty();
+        aabb.add_point(&self.v0);
+        aabb.add_point(&self.v1);
+        aabb.add_point(&self.v2);
+
+        aabb
     }
 }

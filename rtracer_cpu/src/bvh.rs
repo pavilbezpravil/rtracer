@@ -2,7 +2,7 @@ use crate::prelude::*;
 use rtracer_core::prelude::*;
 use rand::Rng;
 
-pub enum BvhNodeData<H: Hit + Copy + Clone> {
+pub enum BvhNodeData<H: Hit + Bounded + Copy + Clone> {
     Leaf(H),
     Node {
         left: Box<BvhNode<H>>,
@@ -10,12 +10,12 @@ pub enum BvhNodeData<H: Hit + Copy + Clone> {
     },
 }
 
-pub struct BvhNode<H: Hit + Copy + Clone> {
+pub struct BvhNode<H: Hit + Bounded + Copy + Clone> {
     data: BvhNodeData<H>,
     aabb: Aabb,
 }
 
-impl<H: Hit + Copy + Clone> BvhNode<H> {
+impl<H: Hit + Bounded + Copy + Clone> BvhNode<H> {
     pub fn build(objs: &mut [H]) -> BvhNode<H> {
         let sort_axis = rand::thread_rng().gen_range(0, 3);
         objs.sort_by(|a, b| a.aabb().min[sort_axis].partial_cmp(&b.aabb().min[sort_axis]).unwrap());
@@ -38,7 +38,7 @@ impl<H: Hit + Copy + Clone> BvhNode<H> {
     }
 }
 
-impl<H: Hit + Copy + Clone> Hit for BvhNode<H> {
+impl<H: Hit + Bounded + Copy + Clone> Hit for BvhNode<H> {
     fn hit(&self, ray: &Ray, t_min_max: (f32, f32)) -> Option<HitRecord> {
         if self.aabb().intersect(ray, t_min_max).is_none() {
             return None
@@ -71,7 +71,9 @@ impl<H: Hit + Copy + Clone> Hit for BvhNode<H> {
             },
         }
     }
+}
 
+impl<H: Hit + Bounded + Copy + Clone> Bounded for BvhNode<H> {
     fn aabb(&self) -> Aabb {
         self.aabb
     }

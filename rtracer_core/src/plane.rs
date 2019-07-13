@@ -3,6 +3,7 @@ use crate::ray::Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_plane_intersection;
+use crate::bounded::Bounded;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Plane {
@@ -27,7 +28,9 @@ impl Intersect for Plane {
 
         None
     }
+}
 
+impl Bounded for Plane {
     fn aabb(&self) -> Aabb {
         unimplemented!()
     }

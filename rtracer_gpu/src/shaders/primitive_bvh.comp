@@ -1,21 +1,37 @@
 #version 450
 
+#define INF (4000000000)
+
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, rgba8) uniform writeonly image2D img;
 
 layout(set = 0, binding = 1) buffer PrimitiveBuffer {
     vec4 primitives[];
-    // Sphere = vec3 - pos, float - radius
-    // Triangle = vec3 - v0, _float, vec3 - v1, _float, vec3 - v2, _float,
+// Sphere = vec3 - pos, float - radius
+// Triangle = vec3 - v0, _float, vec3 - v1, _float, vec3 - v2, _float,
 };
 
-layout(set = 0, binding = 2) buffer MaterialsBuffer {
-    vec4 materials[]; // 8 float
+struct BvhNode {
+    vec4 data0;
+    vec4 data1;
 };
 
-layout(set = 0, binding = 3) buffer ObjectsBuffer {
-    uvec2 objects[]; // primitiveId, materialId
+void bvh_node_left_escape(in BvhNode node, out uint left, out uint escape) {
+    left = uint(node.data0.w);
+    escape = uint(node.data1.w);
+}
+
+layout(set = 0, binding = 2) buffer BvhNodes {
+    vec4 bvh_nodes[];
+};
+
+layout(set = 0, binding = 3) buffer MaterialsBuffer {
+    vec4 materials[];// 8 float
+};
+
+layout(set = 0, binding = 4) buffer ObjectsBuffer {
+    uvec2 objects[];// primitiveId, materialId
 };
 
 layout(push_constant) uniform PushConstant {
@@ -132,7 +148,7 @@ const int PRIMITIVE_TRIANGLE = 2;
 const int PRIMITIVE_CUBE = 3;
 
 struct Primitive {
-    vec4 data0; // last float = type
+    vec4 data0;// last float = type
     vec4 data1;
     vec4 data2;
 };
@@ -182,7 +198,7 @@ Material material_from_buffer(uint idx) {
     float fuzz = data1.w;
     float ref_idx = data2.x;
 
-//    uint scatter_function = floatBitsToUint(data2.w);
+    //    uint scatter_function = floatBitsToUint(data2.w);
     uint scatter_function = uint(data2.w);
 
     if (scatter_function < 1 || scatter_function > 3) {
@@ -199,6 +215,14 @@ Object object_from_buffer(uint idx) {
     uint materialId = data.y;
 
     return Object(primitive_from_buffer(primitiveId), material_from_buffer(materialId));
+}
+
+BvhNode bvh_node_from_buffer(uint idx) {
+    return BvhNode(bvh_nodes[2 * idx + 0], bvh_nodes[2 * idx + 1]);
+}
+
+Cube cube_from_bvh_node(BvhNode node) {
+    return Cube(node.data0.xyz, node.data1.xyz);
 }
 
 bool lambertian_scatter(in Material mat, in Ray r, in HitRecord hit, out vec3 attenuation, out Ray scattered) {
@@ -349,6 +373,19 @@ vec3 aabb_noraml_at(Cube aabb, vec3 point) {
     return res;
 }
 
+bool intersectRayAabb(in Ray r, vec3 invdir, vec3 pmin, vec3 pmax) {
+    const vec3 f = (pmax.xyz - r.origin.xyz) * invdir;
+    const vec3 n = (pmin.xyz - r.origin.xyz) * invdir;
+
+    const vec3 tmax = max(f, n);
+    const vec3 tmin = min(f, n);
+
+    const float t1 = min(tmax.x, min(tmax.y, tmax.z));
+    const float t0 = max(max(tmin.x, max(tmin.y, tmin.z)), 0.0f);
+
+    return t1 >= t0;
+}
+
 bool intersectRayBox(in Ray r, vec3 invdir, vec3 pmin, vec3 pmax, out float tMin, out float tMax) {
     const vec3 f = (pmax.xyz - r.origin.xyz) * invdir;
     const vec3 n = (pmin.xyz - r.origin.xyz) * invdir;
@@ -404,21 +441,45 @@ bool primitive_hit(in Ray r, in Primitive p, in Material material, float t_min, 
     return false;
 }
 
-bool world_hit(in Ray r, float t_min, float t_max, out HitRecord hit) {
-    HitRecord temp_hit;
+bool bvh_node_traverse(in Ray ray, float t_min, float t_max, out HitRecord hit) {
+    const vec3 invdir = 1.0 / ray.direction.xyz;
+
     bool hit_anything = false;
     float closest_so_far = t_max;
 
-    for (int i = 0; i < push_constant.objects_count; i++) {
-        Object o = object_from_buffer(i);
+    uint curr_node = 0;
+    while (curr_node > INF) { // !todo:
+//    while (curr_node != 0xFFFFFFFF) {
+        float min_t = 100000000;
 
-        Primitive primitive = o.primitive;
-        Material material = o.material;
+        BvhNode node = bvh_node_from_buffer(curr_node);
 
-        if (primitive_hit(r, primitive, material, t_min, closest_so_far, temp_hit)) {
-            hit_anything = true;
-            hit = temp_hit;
-            closest_so_far = temp_hit.t;
+        uint left, escape;
+        bvh_node_left_escape(node, left, escape);
+
+//        if (left == 0xFFFFFFFF) { // leaf
+        if (left > INF) { // leaf
+            uint objectId = escape;
+            Object o = object_from_buffer(objectId);
+            Primitive primitive = o.primitive;
+            Material material = o.material;
+
+            HitRecord temp_hit;
+            if (primitive_hit(ray, primitive, material, t_min, closest_so_far, temp_hit)) {
+                closest_so_far = temp_hit.t;
+                hit_anything = true;
+                hit = temp_hit;
+            }
+
+            curr_node = escape;
+        } else {
+            Cube aabb = cube_from_bvh_node(node);
+
+            if (intersectRayAabb(ray, invdir, aabb.min, aabb.max)) {
+                curr_node = left;
+            } else {
+                curr_node = escape;
+            }
         }
     }
 
@@ -432,7 +493,7 @@ vec3 color(Ray r) {
 
     for (int bounce = 0; bounce < 16; bounce++) {
 
-        if (world_hit(r, 0.0001, 1.0 / 0.0, hit)) {
+        if (bvh_node_traverse(r, 0.0001, 1.0 / 0.0, hit)) {
             /* create a new reflected ray */
             Ray scattered;
             vec3 local_attenuation;
@@ -462,7 +523,7 @@ void main() {
     for (int s = 0; s < nsamples; s++) {
         // TODO: triming
         vec2 uv = norm_coordinates + vec2(drand48(col.xy + s), drand48(col.xy + s + 1)) / vec2(imageSize(img) * 8);
-//        vec2 uv = norm_coordinates;
+        //        vec2 uv = norm_coordinates;
 
         Ray r = get_ray(uv.x, uv.y);
         col += color(r);

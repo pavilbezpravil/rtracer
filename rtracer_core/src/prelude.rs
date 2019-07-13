@@ -14,4 +14,5 @@ pub use crate::{
     material::{Material, Lambertian, Metal, Dielectric},
     scene_data::*,
     intersection,
+    bounded::Bounded,
 };

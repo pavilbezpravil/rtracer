@@ -113,7 +113,7 @@ impl SceneData {
         }
 
         let id = self.next_ids.next_object_id();
-        let object = SceneObject::new(primitive, material);
+        let object = SceneObject::new(id, primitive, material);
         self.objects.insert(id, object);
         Some(id)
     }
@@ -128,13 +128,18 @@ impl SceneData {
 
 #[derive(Copy, Clone)]
 pub struct SceneObject {
+    id: ObjectId,
     primitive: PrimitiveId,
     material: MaterialId,
 }
 
 impl SceneObject {
-    fn new(primitive: PrimitiveId, material: MaterialId) -> SceneObject {
-        SceneObject { primitive, material }
+    fn new(id: ObjectId, primitive: PrimitiveId, material: MaterialId) -> SceneObject {
+        SceneObject { id, primitive, material }
+    }
+
+    pub fn id(&self) -> ObjectId {
+        self.id
     }
 
     pub fn primitive(&self) -> PrimitiveId {

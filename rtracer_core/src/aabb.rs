@@ -2,6 +2,7 @@ use crate::Vec3;
 use crate::ray::Ray;
 use crate::intersect::Intersect;
 use crate::intersection::ray_aabb_intersection;
+use crate::bounded::Bounded;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Aabb {
@@ -37,6 +38,32 @@ impl Aabb {
 
     pub fn normal_at(&self, point: &Vec3) -> Vec3 {
         aabb_noraml_at(self, point)
+    }
+
+    pub fn add_point(&mut self, p: &Vec3) {
+        if p.x < self.min.x {
+            self.min.x = p.x;
+        }
+
+        if p.y < self.min.y {
+            self.min.y = p.y;
+        }
+
+        if p.z < self.min.z {
+            self.min.z = p.z;
+        }
+
+        if p.x > self.max.x {
+            self.max.x = p.x;
+        }
+
+        if p.y > self.max.y {
+            self.max.y = p.y;
+        }
+
+        if p.z > self.max.z {
+            self.max.z = p.z;
+        }
     }
 
     pub fn add_aabb(&mut self, other: &Aabb) {
@@ -93,7 +120,9 @@ impl Intersect for Aabb {
 
         None
     }
+}
 
+impl Bounded for Aabb {
     fn aabb(&self) -> Aabb {
         *self
     }

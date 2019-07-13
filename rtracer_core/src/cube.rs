@@ -2,6 +2,7 @@ use crate::aabb::Aabb;
 use crate::Vec3;
 use crate::intersect::Intersect;
 use crate::ray::Ray;
+use crate::bounded::Bounded;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Cube {
@@ -34,7 +35,9 @@ impl Intersect for Cube {
     fn intersect(&self, ray: &Ray, (t_min, t_max): (f32, f32)) -> Option<f32> {
         self.aabb.intersect(ray, (t_min, t_max))
     }
+}
 
+impl Bounded for Cube {
     fn aabb(&self) -> Aabb {
         self.aabb
     }

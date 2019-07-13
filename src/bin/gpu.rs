@@ -6,7 +6,11 @@ use rtracer_core::model_loader::load_geometry_obj;
 use rtracer_gpu::testbed::Testbed;
 use rtracer_gpu::frame_counter::FrameCounter;
 use rtracer_gpu::renderer::Renderer;
+use rtracer_gpu::bvh::{Bvh, BvhItem};
 use vulkano::sync::GpuFuture;
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::device::Device;
+use std::sync::Arc;
 
 fn create_scene() -> SceneData {
     let mut scene = SceneData::new();
@@ -42,7 +46,36 @@ fn load_some_obj() -> Vec<Triangle> {
     load_geometry_obj(Path::new(path)).unwrap()
 }
 
+fn object_to_bvh_item(scene: &SceneData, o: &SceneObject) -> BvhItem {
+    let primitive_id = o.primitive();
+    let primitive = scene.primitive(primitive_id).unwrap();
+    let aabb = primitive.aabb();
+    BvhItem { aabb, id: o.id().0 }
+}
+
+fn create_bvh(scene: &SceneData) -> Bvh {
+    let mut bvh_items = vec![];
+
+    for o in scene.objects_iter() {
+        bvh_items.push(object_to_bvh_item(scene, o.1));
+    }
+
+    Bvh::build(&mut bvh_items)
+}
+
+fn create_bvh_nodes_buffer(device: Arc<Device>, bvh: &Bvh) -> Arc<CpuAccessibleBuffer<[f32]>> {
+    let buf = bvh.to_gpu();
+    CpuAccessibleBuffer::from_iter(device, BufferUsage::all(), buf.iter().cloned()).unwrap()
+}
+
 fn main() {
+
+//    let a = 1242134;
+//    let b = a as f32;
+//    println!("{}", a);
+//    println!("{}", b);
+//
+//    return;
     let (width, height) = (1920 / 2, 1080 / 2);
 //    let (width, height) = (1920, 1080);
     // make size be devided by 8
@@ -65,10 +98,13 @@ fn main() {
 
     let texture = Renderer::create_texture(device.clone(), queue.clone(), (width, height));
 
+    let bvh = create_bvh(&scene);
+    let bvh_nodes_buffer = create_bvh_nodes_buffer(device.clone(), &bvh);
+
     while !testbed.should_close() {
         prev_frame_future = testbed.prepare_frame(prev_frame_future).unwrap();
 
-        let future = renderer.render(&scene, &camera, texture.clone(), prev_frame_future);
+        let future = renderer.render(&scene, bvh_nodes_buffer.clone(), &camera, texture.clone(), prev_frame_future);
 
         prev_frame_future = testbed.render(future, texture.clone());
 

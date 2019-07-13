@@ -3,6 +3,7 @@ use crate::ray:: Ray;
 use crate::aabb::Aabb;
 use crate::intersect::Intersect;
 use crate::intersection::ray_disk_intersection;
+use crate::bounded::Bounded;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Disk {
@@ -26,7 +27,9 @@ impl Intersect for Disk {
 
         None
     }
+}
 
+impl Bounded for Disk {
     fn aabb(&self) -> Aabb {
         unimplemented!()
     }
